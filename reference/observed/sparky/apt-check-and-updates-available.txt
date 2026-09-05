@@ -1,0 +1,11 @@
+210;133
+
+Expanded Security Maintenance for Applications is enabled.
+
+210 updates can be applied immediately.
+6 of these updates are ESM Apps security updates.
+133 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+[mtime] 2026-09-05 11:33:18.631835037 +0300
+[reboot-required] no

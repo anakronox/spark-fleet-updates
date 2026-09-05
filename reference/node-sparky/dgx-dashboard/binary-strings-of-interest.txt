@@ -1,0 +1,46 @@
+*dbus_api.OTAComponents
+GetOTAAvailabilitySnapshot
+GetUpdatesAvailableWithOTAInfo
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.checkAllOTAPackagesAvailable
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).GetOTAAvailabilitySnapshot
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).GetUpdatesAvailableWithOTAInfo
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).refreshUpdatesCache
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).refreshUpdatesCache.deferwrap1
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).refreshUpdatesCache.func1
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.(*DashboardAdminService).refreshUpdatesCache.func2
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.getOTAComponentsFromCLI
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.isOTAAvailableViaCLI
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.findInstalledOTAMetapackage
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.findLatestOTAJSONByReleaseDate
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.findOTAJSONFile
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.parseIsOTAAvailableJSON
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.parseOTAJSONFile
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api/ota.parseOTAVersionsJSON
+gitlab-master.nvidia.com/digits-dx/dgx-dashboard/dashboard-admin/pkg/dbus_api.upgradeOTAMetapackageIfAvailable
+net.spuriousENOTAVAIL
+refreshUpdatesCache
+---SERVICE---
+com.nvidia.dgx.dashboard.admin1.Authenticatecom
+com.nvidia.dgx.dashboard.admin1.ChangeHostnameAndRebootreflect
+com.nvidia.dgx.dashboard.admin1.GenerateJWTcom
+com.nvidia.dgx.dashboard.admin1.GetFWPhasesync
+com.nvidia.dgx.dashboard.admin1.GetOTAAvailabilitySnapshotcalled
+com.nvidia.dgx.dashboard.admin1.GetUpdatesAvailableWithOTAInforeflect
+com.nvidia.dgx.dashboard.admin1.InValidateJWTcom
+com.nvidia.dgx.dashboard.admin1.IsUpdateRebootRunningreflect
+com.nvidia.dgx.dashboard.admin1.StopJupyterlabcom
+com.nvidia.dgx.dashboard.admin1.UpdateAndReboot
+GET /chrome/available
+GET /hostname
+GET /jupyterlab
+GET /jupyterlab/stream
+GET /ota/availability
+GET /update_reboot/status
+GET /updates/available
+GET /updates/list
+POST /hostname
+POST /jupyterlab
+POST /jupyterlab/stop
+POST /telemetry
+POST /update_reboot
+POST /updates/available

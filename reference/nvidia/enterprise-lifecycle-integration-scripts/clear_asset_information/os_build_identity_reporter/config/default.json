@@ -1,0 +1,27 @@
+{
+  "output_path": "/var/lib/dgx_spark_management/clear_asset_information/os_build_identity_reporter/os_build_identity.json",
+  "identity_path": "/var/lib/dgx_spark_management/clear_asset_information/hardware_inventory_collector/device_identity.json",
+  "curated_packages": [
+    "dgx-release",
+    "dgx-repo",
+    "dgx-dashboard",
+    "dgx-oobe",
+    "nvidia-system-core",
+    "nvidia-system-extra",
+    "nvidia-system-station",
+    "nvidia-system-utils",
+    "linux-image-nvidia-hwe-24.04",
+    "linux-headers-nvidia-hwe-24.04",
+    "ubuntu-pro-client",
+    "snapd"
+  ],
+  "curated_snaps": [
+    "firmware-updater",
+    "snapd",
+    "core22",
+    "bare",
+    "snap-store",
+    "firefox",
+    "thunderbird"
+  ]
+}

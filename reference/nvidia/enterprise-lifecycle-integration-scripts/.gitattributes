@@ -1,0 +1,4 @@
+# Force LF so Linux shebangs and scripts never get CRLF from Windows checkouts
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf

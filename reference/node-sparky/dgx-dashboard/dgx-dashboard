@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Resolve dashboard port from installed env file, fallback to 11000
+PORT=11000
+ENV_FILE="/opt/nvidia/dgx-dashboard-service/ports.env"
+if [ -r "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    if [ -n "$DGX_DASHBOARD_PORT" ]; then
+        PORT="$DGX_DASHBOARD_PORT"
+    fi
+fi
+
+URL="http://localhost:${PORT}"
+
+# Prefer xdg-open to use the user's default browser
+if command -v xdg-open >/dev/null 2>&1; then
+    exec xdg-open "$URL"
+fi
+
+# Fallbacks on some systems
+if command -v sensible-browser >/dev/null 2>&1; then
+    exec sensible-browser "$URL"
+fi
+
+if command -v gnome-open >/dev/null 2>&1; then
+    exec gnome-open "$URL"
+fi
+
+echo "Please open $URL in your web browser." >&2
+exit 0

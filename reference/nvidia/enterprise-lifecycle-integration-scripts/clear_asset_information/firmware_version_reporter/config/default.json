@@ -1,0 +1,11 @@
+{
+  "output_path": "/var/lib/dgx_spark_management/clear_asset_information/firmware_version_reporter/firmware_versions.json",
+  "identity_path": "/var/lib/dgx_spark_management/clear_asset_information/hardware_inventory_collector/device_identity.json",
+  "enable_fwupd": true,
+  "enable_ethtool": true,
+  "enable_nvme_sysfs": true,
+  "enable_nvme_cli": true,
+  "enable_nvidia_smi": true,
+  "enable_lspci": true,
+  "max_raw_text_bytes": 200000
+}

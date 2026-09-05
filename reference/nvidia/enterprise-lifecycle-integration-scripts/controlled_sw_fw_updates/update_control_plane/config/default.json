@@ -1,0 +1,20 @@
+{
+  "runtime_output_dir": "/var/lib/dgx_spark_management/controlled_sw_fw_updates/update_control_plane",
+  "log_path": "logs/controlled_sw_fw_updates/update_control_plane/spark_updatectl.log",
+  "reboot": {
+    "require_no_blocking_inhibitors": true,
+    "allow_delay_inhibitors": true,
+    "default_delay_sec": 0
+  },
+  "grub": {
+    "grub_cfg": "/boot/grub/grub.cfg"
+  },
+  "systemd_schedule": {
+    "timer_unit": "spark-updatectl-reboot.timer",
+    "service_unit": "spark-updatectl-reboot.service"
+  },
+  "fwupd": {
+    "enable_release_query": false,
+    "max_releases_per_device": 20
+  }
+}

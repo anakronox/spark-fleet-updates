@@ -1,0 +1,9 @@
+{
+  "available": false,
+  "name": "July 2026",
+  "description": "This update includes a driver update to improve handling of out-of-memory conditions and display stability.",
+  "releaseNotesUrl": "https://docs.nvidia.com/dgx/dgx-spark/release-notes.html",
+  "releaseDate": "2026-07-15T00:00:00.000Z",
+  "metadataFilePath": "",
+  "recommendedActions": []
+}

@@ -1,0 +1,6 @@
+{
+  "output_path": "/var/lib/dgx_spark_management/clear_asset_information/driver_inventory_reporter/driver_inventory.json",
+  "max_raw_bytes": 200000,
+  "enable_usb": true,
+  "enable_modinfo": true
+}

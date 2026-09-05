@@ -1,0 +1,18 @@
+{
+  "output_path": "/var/lib/dgx_spark_management/clear_asset_information/software_inventory_reporter/software_inventory.json",
+  "mode": "full",
+  "enable_pip": false,
+  "enable_docker": false,
+  "docker_include_info": false,
+  "curated_dpkg_regex": "^(dgx|nvidia|linux-image|linux-headers|snapd|ubuntu-pro-client)\\b",
+  "curated_snaps": [
+    "firmware-updater",
+    "snapd",
+    "core22",
+    "bare",
+    "snap-store",
+    "firefox",
+    "thunderbird"
+  ],
+  "max_items": 50000
+}

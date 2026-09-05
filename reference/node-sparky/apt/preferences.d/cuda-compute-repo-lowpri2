@@ -1,0 +1,31 @@
+Package: libnvidia-*580
+Pin: release l=NVIDIA CUDA
+Pin-Priority: -1
+
+Package: nvidia-*580
+Pin: release l=NVIDIA CUDA
+Pin-Priority: -1
+
+Package: nvidia-*580*-open
+Pin: release l=NVIDIA CUDA
+Pin-Priority: -1
+
+Package: xserver-xorg-video-nvidia-580
+Pin: release l=NVIDIA CUDA
+Pin-Priority: -1
+
+Package: nvidia-fabricmanager
+pin: release l=NVIDIA CUDA
+pin-priority: -1
+
+Package: nvidia-imex
+pin: release l=NVIDIA CUDA
+pin-priority: -1
+
+Package: nvidia-persistenced
+pin: release l=NVIDIA CUDA
+pin-priority: -1
+
+Package: libnvidia-nscq
+pin: release l=NVIDIA CUDA
+pin-priority: -1

@@ -1,0 +1,133 @@
+Package: dgx-spark-ota-update-meta
+Version: 26.04.1
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), dgx-spark-mlnx-hotplug, lldpd, nvidia-desktop-default-remove-gnome-software-deb, nvidia-desktop-default-snaps, nvidia-enable-bt-profiles, nvidia-lvfs-config, nvidia-spark-avahi-conf, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-grub-pci, nvidia-spark-initcall-bl, nvidia-spark-limits, nvidia-spark-ota-check, nvidia-spark-realtek-mod-options, nvidia-spark-repo, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/common/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_26.04.1_all.deb
+Size: 2428
+SHA256: 0c22a4915944af939ddbb2efd146a2e95c51dacf9d2a6bc9f86366142b4daf3e
+SHA1: 08580bf5c1d92d64db8a8e4e222ecb4a71131467
+MD5sum: b8cdf18e52c24a2b425cb4b658ca24f0
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 26.03.1
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), dgx-spark-mlnx-hotplug, lldpd, nvidia-desktop-default-remove-gnome-software-deb, nvidia-desktop-default-snaps, nvidia-enable-bt-profiles, nvidia-lvfs-config, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-grub-pci, nvidia-spark-initcall-bl, nvidia-spark-realtek-mod-options, nvidia-spark-repo, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_26.03.1_all.deb
+Size: 2400
+SHA256: 23bbad80558cf4e13c45c882401c7983f75f576ce3f17b0b0c46a2e00e09ec1c
+SHA1: 26a9f2a745826d57576598df4c38429a3595570a
+MD5sum: 1b55b47d44415e001604c16651a2de49
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 26.02.1
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), dgx-spark-mlnx-hotplug, nvidia-desktop-default-remove-gnome-software-deb, nvidia-desktop-default-snaps, nvidia-enable-bt-profiles, nvidia-lvfs-config, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-grub-pci, nvidia-spark-initcall-bl, nvidia-spark-realtek-mod-options, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_26.02.1_all.deb
+Size: 2396
+SHA256: 1d0aa9225c6d790eb7934645717d2821a219b13ca5304647eb06f56485fc5f08
+SHA1: 96855365e8e548de909779dee1313cc16da6e67b
+MD5sum: 78ff2d271da1644a5bfe63cbef2663b2
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 25.10.5
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), nvidia-desktop-default-remove-gnome-software-deb, nvidia-desktop-default-snaps, nvidia-lvfs-config, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-grub-pci, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_25.10.5_all.deb
+Size: 2340
+SHA256: e10c30be3698bc4f765fc2f34183054bf706fce0792cd18eb0c7ad5e255aa1af
+SHA1: f73234d8ce035ab3da078a96c5135d6247b8d097
+MD5sum: 7faa00dd7795c79b13a3dbb892463d36
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 25.10.3
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), nvidia-desktop-default-snaps, nvidia-lvfs-config, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_25.10.3_all.deb
+Size: 2320
+SHA256: a834e80c27b431a0fee0ef42d29e755bfbf0c77b9b1875d65342b6b9fd7113a9
+SHA1: bcdfa07d530bbba2c29921f0ae76350e897ab7ce
+MD5sum: a3c17fd0cfe038ea61a2aa528a7f3f54
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 25.10.2
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00), nvidia-lvfs-config, nvidia-spark-baud-rate, nvidia-spark-default-remove-nvidia-fs-pkg, nvidia-spark-fstab-config, nvidia-spark-run-apt-upgrade
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_25.10.2_all.deb
+Size: 2316
+SHA256: d5f83360ca1f0cd483a111b7d9b0b96c74cb0aa47619bd3080ebc181828aa836
+SHA1: 6f70d2bb7148d8c04ad3a32a9998c6a17cf515af
+MD5sum: ae73d6960e238edfc51d35cf1937f78b
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+
+Package: dgx-spark-ota-update-meta
+Version: 25.06.1
+Architecture: all
+Maintainer: dgx-cosmos-support <dgx-cosmos-support@nvidia.com>
+Installed-Size: 10
+Depends: debconf (>= 0.5.00)
+Multi-Arch: foreign
+Priority: standard
+Section: multiverse/admin
+Filename: pool/dgx/d/dgx-spark-ota-update-meta/dgx-spark-ota-update-meta_25.06.1_all.deb
+Size: 2248
+SHA256: 95e456b78bad4c772a86f17d5f11913d3b4ef8c26ccfb6fd481c8632ad2d61c2
+SHA1: 10e48b4a5eb8d50ca4b8e06d72c5fa95a32dcfac
+MD5sum: c40b6a51ac82c6af2dfa0b9b76f8aff8
+Description: Package pulls new dependencies into the DGX Spark.
+ Add all the other related packages as dependencies.
+ Note: This is a metapackage.
+Description-md5: 
+

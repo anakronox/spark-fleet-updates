@@ -1,0 +1,20 @@
+{
+  "runtime_output_dir": "/var/lib/dgx_spark_management/remote_ops_remediation/diagnostic_collector",
+  "log_path": "/var/log/dgx_spark/remote_ops_remediation/diagnostic_collector/spark_diagctl.log",
+  "truncate": {
+    "max_lines": 500,
+    "max_bytes": 500000
+  },
+  "health": {
+    "fast_mode": true,
+    "poll_interval_sec": 1
+  },
+  "crash": {
+    "kdump_config": "/etc/default/kdump-tools",
+    "core_pattern": "/proc/sys/kernel/core_pattern",
+    "core_dump_dirs": [
+      "/var/crash",
+      "/var/lib/systemd/coredump"
+    ]
+  }
+}

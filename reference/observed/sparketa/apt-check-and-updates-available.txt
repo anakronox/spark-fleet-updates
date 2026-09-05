@@ -1,0 +1,10 @@
+152;117
+
+Expanded Security Maintenance for Applications is enabled.
+
+152 updates can be applied immediately.
+117 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+[mtime] 2026-09-05 12:32:39.825669447 +0300
+[reboot-required] no

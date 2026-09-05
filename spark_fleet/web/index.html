@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>spark-fleet-updates</title>
+<style>
+  /* Tokens follow spark-dash's instrument-panel direction: one monospace family,
+     warm-neutral dark surfaces, hierarchy by scale and weight. */
+  /* Palettes lifted from spark-dash's app.css so the two read as siblings.
+     `data-theme` on <html> selects one; the default is dark. */
+  :root { color-scheme:dark; --page:#0d0d0d; --panel:#1a1a19; --raised:#232321; --rule:#2c2c2a; --track:#232321;
+          --ink:#ffffff; --ink-2:#ebebe5; --muted:#cac9c4; --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d85b5b;
+          --chart-1:#7261c1; --chart-2:#2ca79e; --chart-3:#2c95ff; --chart-4:#b92c84; --chart-5:#b072d3; --chart-6:#007295; --chart-7:#4658f6; --chart-8:#098d9e; --r:3px; }
+  :root[data-theme='cyberpunk'] { color-scheme:dark; --page:#08060f; --panel:#130f21; --raised:#1d1638; --rule:#3b2d63; --track:#1d1638;
+          --ink:#f6f1ff; --ink-2:#e7defb; --muted:#c8bce6; --good:#00f58e; --warn:#ffd24d; --serious:#ff9d5c; --crit:#ff4d85;
+          --chart-1:#c146ca; --chart-2:#008472; --chart-3:#0084ff; --chart-4:#09a7b0; --chart-5:#6a2cff; --chart-6:#126a95; --chart-7:#9512dc; --chart-8:#b06a95; }
+  :root[data-theme='forest'] { color-scheme:dark; --page:#000000; --panel:#0a0f0a; --raised:#111a11; --rule:#1e3a1e; --track:#111a11;
+          --ink:#eaf5ea; --ink-2:#d4e4d4; --muted:#afc5af; --good:#76b900; --warn:#fab219; --serious:#ec835a; --crit:#d85b5b;
+          --chart-1:#8d4fc1; --chart-2:#12a78d; --chart-3:#009eed; --chart-4:#b91284; --chart-5:#1a6aff; --chart-6:#c172c1; --chart-7:#613ee5; --chart-8:#0995b0; }
+  :root[data-theme='contrast'] { color-scheme:dark; --page:#000000; --panel:#000000; --raised:#141414; --rule:#6e6e6e; --track:#262626;
+          --ink:#ffffff; --ink-2:#e6e6e6; --muted:#b8b8b8; --good:#6ee06e; --warn:#ffc740; --serious:#ff9d5c; --crit:#ff7b7b;
+          --chart-1:#3e9ed3; --chart-2:#72f6e5; --chart-3:#584fff; --chart-4:#b04684; --chart-5:#cab0ff; --chart-6:#b900ca; --chart-7:#2cc1ca; --chart-8:#1a84f6; }
+  :root[data-theme='slate'] { color-scheme:dark; --page:#0d1117; --panel:#12181f; --raised:#1a222c; --rule:#2a3441; --track:#1a222c;
+          --ink:#e4eaf2; --ink-2:#e2e9f1; --muted:#bec8d4; --good:#35b87a; --warn:#fab219; --serious:#ec835a; --crit:#e56a6a;
+          --chart-1:#ca3eca; --chart-2:#0084ff; --chart-3:#1a6a95; --chart-4:#4646ff; --chart-5:#b92384; --chart-6:#9e12dc; --chart-7:#1a95a7; --chart-8:#846adc; }
+  :root[data-theme='paper'] { color-scheme:light; --page:#f4f1e9; --panel:#fbf9f4; --raised:#f0ece1; --rule:#ddd6c7; --track:#ebe6da;
+          --ink:#241f18; --ink-2:#393229; --muted:#544c41; --good:#147a3d; --warn:#8a6100; --serious:#b8531c; --crit:#b3352c;
+          --chart-1:#dc3eb9; --chart-2:#7b0995; --chart-3:#3e8dff; --chart-4:#4609f6; --chart-5:#00849e; --chart-6:#844fdc; --chart-7:#1a9e95; --chart-8:#09618d; }
+  :root[data-theme='light'] { color-scheme:light; --page:#f9f9f7; --panel:#fcfcfb; --raised:#f2f1ec; --rule:#e1e0d9; --track:#eceae3;
+          --ink:#0b0b0b; --ink-2:#353433; --muted:#504e4b; --good:#0a860a; --warn:#9a6a03; --serious:#c84917; --crit:#d03b3b;
+          --chart-1:#f623b0; --chart-2:#841a84; --chart-3:#2395ff; --chart-4:#3500f6; --chart-5:#008da7; --chart-6:#6135c1; --chart-7:#b06adc; --chart-8:#1a9e8d; }
+  :root { --info:var(--chart-3); }
+  * { box-sizing:border-box }
+  html { background:var(--page) } body { margin:0; background:var(--page); color:var(--ink); font:12px/1.45 ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace; -webkit-font-smoothing:antialiased }
+  a { color:var(--info); } a:hover { color:var(--info) }
+  .wrap { max-width:1440px; margin:0 auto; padding:16px 20px 40px }
+  .hdr { display:flex; align-items:center; gap:18px; height:44px }
+  .brand { font-size:15px; font-weight:700 }
+  .grow { flex:1 }
+  .rule { height:1px; background:var(--rule); margin:6px 0 14px }
+  .muted { color:var(--muted) } .ink2 { color:var(--ink-2) } .micro { font-size:10px } .label { font-size:11px }
+  .good { color:var(--good) } .warn { color:var(--warn) } .crit { color:var(--crit) } .info { color:var(--info) }
+  .btn { display:inline-flex; align-items:center; gap:8px; height:26px; padding:0 12px; border-radius:var(--r); font:inherit; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; border:1px solid var(--rule); color:var(--ink-2); background:var(--raised); cursor:pointer; white-space:nowrap }
+  .btn:hover { border-color:var(--muted) } .btn:disabled { opacity:.45; cursor:default }
+  .btn.primary { background:var(--good); border-color:var(--good); color:var(--page) } .btn.danger { border-color:var(--crit); color:var(--crit); background:transparent }
+  .btn.icon { padding:0 8px }
+  .pill { display:inline-flex; align-items:center; gap:6px; height:20px; padding:0 8px; border:1px solid var(--rule); border-radius:var(--r); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2); white-space:nowrap }
+  .pill.good { border-color:var(--good); color:var(--good) } .pill.warn { border-color:var(--warn); color:var(--warn) } .pill.crit { border-color:var(--crit); color:var(--crit) } .pill.info { border-color:var(--info); color:var(--info) }
+  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex:none }
+  .cluster { border:1px dashed var(--rule); border-radius:var(--r); padding:12px 12px 4px; margin-bottom:10px }
+  .clusterhead { display:flex; align-items:baseline; gap:12px; padding:0 4px 10px; flex-wrap:wrap }
+  .clustername { font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase }
+  .clusterhead .btn.icon { height:20px; font-size:10px }
+  .links { font-size:10px; color:var(--muted) }
+  .row { background:var(--panel); border:1px solid var(--rule); border-radius:var(--r); margin-bottom:10px; position:relative }
+  .rowhead { display:flex; align-items:center; gap:14px; padding:14px 16px; min-height:56px }
+  .name { font-size:19px; font-weight:700; min-width:120px }
+  .host { min-width:110px }
+  .sub { color:var(--muted) }
+  .rowhead .sub { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .expand { border-top:1px solid var(--rule); padding:16px; display:grid; grid-template-columns:1.1fr 1fr 1.2fr; gap:24px }
+  @media (max-width:1000px) { .expand { grid-template-columns:1fr } }
+  .h { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px }
+  .li { display:flex; justify-content:space-between; gap:12px; padding:5px 0; border-bottom:1px solid var(--raised) }
+  .li:last-child { border-bottom:none }
+  .track { height:8px; background:var(--track); border-radius:2px; overflow:hidden } .fill { height:100%; background:var(--info); transition:width .6s }
+  .foot { padding:0 16px 16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+  .menu { position:absolute; right:16px; top:48px; background:var(--raised); border:1px solid var(--rule); border-radius:var(--r); padding:6px 0; width:200px; z-index:5 }
+  .menu button { display:block; width:100%; text-align:left; background:none; border:0; color:var(--ink-2); font:inherit; padding:7px 12px; cursor:pointer } .menu button:hover { background:var(--rule) }
+  .log { background:var(--page); border:1px solid var(--rule); border-radius:var(--r); padding:10px 12px; font-size:11px; line-height:1.55; color:var(--muted); white-space:pre-wrap; max-height:260px; overflow:auto }
+  dialog { background:var(--panel); color:var(--ink); border:1px solid var(--rule); border-radius:var(--r); padding:20px 22px; width:min(560px, 92vw); font:inherit }
+  dialog::backdrop { background:rgba(0,0,0,.6) }
+  .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px }
+  .eyebrow { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted) }
+  input { height:32px; border:1px solid var(--rule); border-radius:var(--r); background:var(--page); color:var(--ink); font:inherit; padding:0 10px } input:focus { outline:1px solid var(--info) }
+  .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:6px }
+  .empty { text-align:center; padding:60px 0; color:var(--muted) }
+  .pop { position:absolute; right:20px; top:52px; background:var(--raised); border:1px solid var(--rule); border-radius:var(--r); padding:12px 14px; z-index:6; width:320px }
+  .choices { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px }
+  .choices button { font:inherit; font-size:11px; height:26px; padding:0 10px; border-radius:var(--r); border:1px solid var(--rule); background:var(--panel); color:var(--ink-2); cursor:pointer }
+  .choices button.active { border-color:var(--ink); color:var(--ink) }
+  select { height:26px; border:1px solid var(--rule); border-radius:var(--r); background:var(--panel); color:var(--ink); font:inherit; font-size:11px; padding:0 6px }
+  .pkgtable { width:100%; border-collapse:collapse; table-layout:auto } .pkgtable th { position:sticky; top:0; background:var(--panel); text-align:left; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:400; padding:6px 18px 8px 0; border-bottom:1px solid var(--rule) }
+  .pkgtable td { padding:6px 18px 6px 0; border-bottom:1px solid var(--raised); white-space:nowrap } .pkgtable tr:last-child td { border-bottom:none }
+  .pager { display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--raised); border:1px solid var(--rule); padding:8px 14px; border-radius:var(--r); display:none }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <span class="brand">spark-fleet-updates</span>
+    <span class="label muted" id="summary">loading…</span>
+    <div class="grow"></div>
+    <span class="label muted" id="nextCheck"></span>
+    <button class="btn" id="checkAll">check all now</button>
+    <button class="btn primary" id="addBtn">+ add a spark</button>
+    <button class="btn icon" id="settingsBtn" title="Settings">⚙</button>
+  </div>
+  <div class="pop" id="settingsPop" hidden>
+    <div class="eyebrow">theme</div>
+    <div class="choices" id="themeChoices"></div>
+    <div class="micro muted" style="margin-top:10px">Saved in this browser. The same palettes as spark-dash.</div>
+  </div>
+  <div class="rule"></div>
+  <div id="list"></div>
+</div>
+
+<dialog id="addDlg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-size:19px;font-weight:700">Add a Spark</span><div class="grow"></div><button class="btn icon" onclick="addDlg.close()">×</button></div>
+  <div class="field"><span class="eyebrow">hostname or IP</span><input id="addHost" placeholder="192.0.2.11" autocomplete="off"></div>
+  <div class="field"><span class="eyebrow">name</span><input id="addName" placeholder="sparkfour" autocomplete="off"></div>
+  <div class="sub" style="margin-bottom:12px">Connects over SSH with this controller's key, as an ordinary user with sudo. Nothing is installed on the Spark — it's checked for updates from here.</div>
+  <div id="testResult" class="label" style="min-height:20px;margin-bottom:10px"></div>
+  <div class="actions"><button class="btn" id="testBtn">test connection</button><div class="grow"></div><button class="btn" onclick="addDlg.close()">cancel</button><button class="btn primary" id="addGo">add</button></div>
+</dialog>
+
+<dialog id="confirmDlg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:14px"><span style="font-size:19px;font-weight:700" id="cfTitle"></span><div class="grow"></div><button class="btn icon" onclick="confirmDlg.close()">×</button></div>
+  <div id="cfBody" class="ink2" style="line-height:1.6"></div>
+  <div id="cfPass" class="field" style="margin-top:14px" hidden>
+    <span class="eyebrow">password for <span id="cfUser"></span> on the Spark</span>
+    <input id="cfPassword" type="password" autocomplete="off" placeholder="needed to run the update as root">
+    <span class="micro muted">Used once, for this update only. Never stored. Sent over this HTTPS connection.</span>
+  </div>
+  <div id="cfWarn" class="micro warn" style="margin-top:8px" hidden></div>
+  <div class="actions" style="margin-top:18px"><button class="btn" onclick="confirmDlg.close()">cancel</button><button class="btn primary" id="cfGo"></button></div>
+</dialog>
+
+<dialog id="pkgDlg" style="width:fit-content; min-width:min(720px, 94vw); max-width:94vw">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700" id="pkgTitle"></span><div class="grow"></div>
+    <input id="pkgFilter" placeholder="filter…" style="height:26px;width:180px" autocomplete="off"><button class="btn icon" onclick="pkgDlg.close()">×</button></div>
+  <div style="max-height:min(60vh, 640px); overflow:auto; border:1px solid var(--rule); border-radius:var(--r); padding:0 10px"><table class="pkgtable"><thead><tr><th>package</th><th>from</th><th>to</th><th></th></tr></thead><tbody id="pkgBody"></tbody></table></div>
+  <div class="pager"><span class="label muted" id="pkgRange"></span><div class="grow"></div>
+    <span class="label muted">per page</span><select id="pkgPer"><option>10</option><option>25</option><option>50</option><option>100</option></select>
+    <button class="btn" id="pkgPrev">‹ prev</button><span class="label" id="pkgPage"></span><button class="btn" id="pkgNext">next ›</button></div>
+</dialog>
+
+<dialog id="logDlg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px"><span style="font-size:15px;font-weight:700" id="logTitle"></span><div class="grow"></div><button class="btn icon" onclick="logDlg.close()">×</button></div>
+  <div class="log" id="logBody" style="max-height:60vh"></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, el=document) => el.querySelector(s);
+const state = { fleet:null, open:new Set(), menu:null, logRun:null };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COLORS = [1,2,3,4,5,6,7,8].map(i => `var(--chart-${i})`);
+const ago = iso => { if(!iso) return '—'; const s=(Date.now()-Date.parse(iso))/1000; if(s<90) return 'just now'; if(s<5400) return Math.round(s/60)+' min ago'; if(s<172800) return Math.round(s/3600)+' h ago'; return Math.round(s/86400)+' d ago'; };
+const clock = iso => iso ? new Date(iso).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+const mb = b => b==null ? '' : b>1e9 ? (b/1e9).toFixed(1)+' GB' : b>1e6 ? Math.round(b/1e6)+' MB' : Math.round(b/1e3)+' KB';
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', 3500); }
+async function api(path, body){ const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined); const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error || r.statusText); return j; }
+
+function statusOf(n){
+  if(n.run) return {cls:'info', text: n.run.rehearsal ? '● rehearsing' : '● updating'};
+  if(n.checking && n.reachable==null) return {cls:'', text:'checking…'};
+  if(n.reachable===false) return {cls:'crit', text:'unreachable'};
+  if(n.reachable==null) return {cls:'', text:'not checked yet'};
+  if(n.firmware_readable===false) return {cls:'warn', text:"can't check firmware"};
+  if(n.release.available && !n.updates?.total && !(n.firmware_updates||[]).length) return {cls:'warn', text:'waiting on firmware'};
+  if(n.release.available) return {cls:'warn', text:'update available'};
+  return {cls:'good', text:'up to date with NVIDIA'};
+}
+function lineOf(n){
+  if(n.run){ const me = n.run.nodes.find(x=>x.name===n.name); const st = me?.step; const lbl = {check:'checking it is safe', install:'installing', restart:'restarting', verify:'verifying'}[st] || (me?.status==='queued' ? 'waiting its turn' : '…'); return lbl; }
+  if(n.reachable===false) return 'could not connect' + (n.error ? ' · '+n.error.slice(0,80) : '');
+  if(!n.release) return '';
+  const u = n.updates || {};
+  if(n.firmware_readable===false) return `firmware needs the two read-only sudo rules (see the guide) · ${u.total!=null ? `${u.total} package updates, ${u.security} security` : ''}`; const cnt = u.total!=null ? `${u.total} updates, ${u.security} security` : 'counting…';
+  if(n.release.available && !u.total && !(n.firmware_updates||[]).length) return `on ${n.release.on_name} · waiting for the vendor's ${n.release.latest_name} firmware · nothing to install`;
+  if(n.release.available) return `NVIDIA ${n.release.latest_name} release · ${cnt}`;
+  return u.total ? `${u.total} routine Ubuntu updates, ${u.security} security` : 'no updates';
+}
+
+function render(){
+  const f = state.fleet; if(!f) return;
+  const nodes = f.nodes;
+  const installable = n => n.reachable && (n.updates?.total || (n.firmware_updates||[]).length);
+  const withUpd = nodes.filter(installable).length;
+  const waitingFw = nodes.filter(n => n.reachable && n.release?.available && !installable(n)).length;
+  const updating = nodes.filter(n=>n.run).length;
+  $('#summary').textContent = nodes.length ? `${nodes.length} Spark${nodes.length>1?'s':''} · ${updating ? updating+' updating · ' : ''}${withUpd} ${withUpd===1?'has':'have'} updates${waitingFw ? ` · ${waitingFw} waiting on firmware` : ''} · last checked ${clock(f.last_sweep)}` : 'no Sparks yet';
+  const list = $('#list');
+  if(!nodes.length){ list.innerHTML = `<div class="empty">No Sparks yet. Add one with the button above.</div>`; renderNextCheck(); return; }
+  const color = Object.fromEntries(nodes.map((n,i) => [n.name, COLORS[i % COLORS.length]]));
+  const byName = Object.fromEntries(nodes.map(n => [n.name, n]));
+  const clusters = f.clusters || []; const inCluster = new Set(clusters.flatMap(c => c.members));
+  const groups = clusters.map(c => clusterHtml(c, byName, color)).join('');
+  const singles = nodes.filter(n => !inCluster.has(n.name)).map(n => rowHtml(n, color[n.name])).join('');
+  list.innerHTML = groups + singles;
+  renderNextCheck();
+}
+
+function rowHtml(n, color){
+  const st = statusOf(n); const open = state.open.has(n.name);
+  const canUpdate = n.reachable && !n.run && n.release && (n.updates?.total || (n.firmware_updates||[]).length);
+  const actions = n.run
+    ? `<button class="btn danger" data-stop="${esc(n.run.id)}">stop after this step</button>`
+    : `<button class="btn" data-toggle="${esc(n.name)}" ${!n.reachable?'disabled':''}>${open?'hide updates ▴':'show updates ▾'}</button>
+       <button class="btn ${n.release?.available?'primary':''}" data-update="${esc(n.name)}" ${canUpdate?'':'disabled'}>update</button>`;
+  return `<div class="row">
+    <div class="rowhead">
+      <span class="dot" style="background:${color}"></span>
+      <span class="name">${esc(n.name)}</span>
+      <span class="micro muted host">${esc(n.host)}</span>
+      <span class="pill ${st.cls}">${esc(st.text)}</span>
+      <span class="sub" title="${esc(lineOf(n))}">${esc(lineOf(n))}</span>
+      ${actions}
+      <button class="btn icon" data-menu="${esc(n.name)}">⋯</button>
+    </div>
+    ${state.menu===n.name ? menuHtml(n) : ''}
+    ${n.run ? runHtml(n) : ''}
+    ${!n.run && n.last_run && recent(n.last_run) ? lastRunHtml(n) : ''}
+    ${open && n.reachable && !n.run ? expandHtml(n) : ''}
+  </div>`;
+}
+function clusterHtml(c, byName, color){
+  const gbe = l => l.speed_mbps ? `${Math.round(l.speed_mbps/1000)} GbE` : 'link';
+  const linkTxt = c.links.map(l => `${l.a} ${l.a_port} ↔ ${l.b}${l.b_port ? ' '+l.b_port : ''} · ${gbe(l)}`).join('  ·  ');
+  const summary = c.links.length ? `${c.links.length} direct ${c.links.length===1?'link':'links'} · ${[...new Set(c.links.map(gbe))].join(' + ')}` : 'linked';
+  const rows = c.members.map(m => byName[m] ? rowHtml(byName[m], color[m]) : '').join('');
+  return `<div class="cluster">
+    <div class="clusterhead">
+      <span class="clustername">${esc(c.name)}</span>
+      <button class="btn icon" data-cluster-rename="${esc(c.members.join('+'))}" title="Rename">✎</button>
+      <span class="label muted">${c.members.length} Sparks · ${summary} · auto-discovered</span>
+      <div class="grow"></div>
+      <span class="links" title="what each port sees over LLDP">${esc(linkTxt)}</span>
+    </div>
+    ${rows}
+  </div>`;
+}
+const recent = r => r.finished_at && (Date.now()-Date.parse(r.finished_at)) < 86400e3*3;
+function menuHtml(n){ return `<div class="menu"><button data-act="check" data-n="${esc(n.name)}">Check now</button><button data-act="rehearse" data-n="${esc(n.name)}">Rehearse an update</button><button data-act="rename" data-n="${esc(n.name)}">Rename</button><button data-act="log" data-n="${esc(n.name)}">Last update log</button><button class="crit" data-act="remove" data-n="${esc(n.name)}">Remove ${esc(n.name)}…</button></div>`; }
+
+function expandHtml(n){
+  const r = n.release, u = n.updates || {packages:[]}, fw = n.firmware_updates || [];
+  const pkgs = u.packages || []; const shown = pkgs.slice(0, 8);
+  const behindFw = r.behind.filter(b=>b.kind==='firmware');
+  const rel = r.available
+    ? `<div class="h">NVIDIA ${esc(r.latest_name)} release</div><div class="ink2" style="line-height:1.5">${esc(r.description)}</div>
+       <div style="margin-top:10px"><a href="${esc(r.release_notes_url)}" target="_blank" rel="noopener">See release notes</a></div>
+       <div class="micro muted" style="margin-top:14px">${esc(n.name)} is on the ${esc(r.on_name)} release (${r.checks_passed} of ${r.checks_total} checks pass for ${esc(r.latest_name)}).</div>`
+    : `<div class="h">NVIDIA release</div><div class="ink2">On ${esc(r.on_name)} — the latest.</div><div class="micro muted" style="margin-top:8px">${r.checks_passed} of ${r.checks_total} checks pass${r.behind.length ? ' · behind on: '+esc(r.behind.map(b=>b.label).join(', ')) : ''}.</div>`;
+  const fwRows = fw.length ? fw.map(f=>`<div class="li"><span>${esc(f.device)}</span><span class="muted">${esc(f.now)} → <span class="ink2">${esc(f.after)}</span>${f.size?` <span class="micro">${mb(f.size)}</span>`:''}</span></div>`).join('')
+                : (behindFw.length ? behindFw.map(b=>`<div class="li"><span>${esc(b.label)}</span><span class="muted">${esc(short(b.installed))} → <span class="ink2">${esc(b.target)}</span></span></div>`).join('') : `<div class="muted">none</div>`);
+  const cx7 = n.cx7?.state==='not-verifiable' ? `<div class="micro muted" style="margin-top:10px">Network card firmware can't be checked until a cable is plugged in.</div>`
+            : n.cx7?.state==='behind' ? `<div class="micro warn" style="margin-top:10px">Network card firmware ${esc(n.cx7.version)} is behind the release.</div>` : '';
+  const pkgRows = shown.map(p=>`<div class="li"><span>${esc(p.name)}</span><span class="${p.new?'good':'muted'}">${p.new ? 'new' : (p.security ? 'security' : esc(p.source))}</span></div>`).join('');
+  const more = pkgs.length > 8 ? `<div class="li"><span class="muted">and ${pkgs.length-8} more</span><a href="#" data-pkgs="${esc(n.name)}">see all ${pkgs.length} →</a></div>` : '';
+  const dur = fw.length ? 'about 35 minutes' : 'about 15 minutes';
+  return `<div class="expand">
+      <div>${rel}</div>
+      <div><div class="h">Firmware · ${fw.length || behindFw.length} device${(fw.length||behindFw.length)===1?'':'s'}</div>${fwRows}${cx7}</div>
+      <div><div class="h">Packages · ${u.total ?? pkgs.length} <span style="text-transform:none;letter-spacing:0">(${u.security ?? 0} security)</span></div>${pkgRows || '<div class="muted">none</div>'}${more}
+        <div class="micro muted" style="margin-top:8px">${u.counts ? `${u.counts.upgraded} upgraded, ${u.counts.new} new, ${u.counts.removed} removed` : ''}${u.as_of ? ' · counted '+ago(u.as_of) : ''}</div></div>
+    </div>
+    <div class="foot">
+      <button class="btn primary" data-update="${esc(n.name)}">update ${esc(n.name)}${n.pair?.length ? ' and '+esc(n.pair.join(', ')) : ''}</button>
+      <span class="sub">Takes ${dur} and restarts ${esc(n.name)} when it's done.${n.reboot?.required ? ' A restart is already pending.' : ''}</span>
+    </div>`;
+}
+const short = s => { if(!s) return 'not reported'; const m = /FW1: ([\d.]+)/.exec(s); return m ? m[1] : s.replace(/^SBP:R:/,'').slice(0,24); };
+
+function runHtml(n){
+  const me = n.run.nodes.find(x=>x.name===n.name); if(!me) return '';
+  const inst = me.steps?.install;
+  // one bar for the whole update: check 0–3%, install 3–80%, restart 80–95%, verify 95–100%
+  const instFrac = inst?.progress ?? (inst?.status==='ok' ? 1 : 0);
+  const pct = me.status==='queued' ? 0 : me.step==='check' ? 2 : me.step==='install' ? Math.round(3 + 77*instFrac) : me.step==='restart' ? 88 : me.step==='verify' ? 97 : 100;
+  const phaseTxt = {lock:'waiting for other installs to finish', 'apt-update':'refreshing the package list', 'apt-upgrade':'installing packages', 'fw-refresh':'checking for firmware', 'fw-upgrade':'installing firmware', done:'packages and firmware installed'}[inst?.phase] || 'starting';
+  const stepTxt = {check:'checking it is safe to update', install: phaseTxt, restart: 'restarting · ' + (me.steps?.restart?.detail || 'waiting for it to come back'), verify:'verifying it is on the new release'}[me.step] || (me.status==='queued' ? 'waiting its turn' : '');
+  const eta = me.eta_seconds==null ? '' : me.eta_seconds < 60 ? 'under a minute left' : `about ${me.eta_seconds < 600 ? Math.max(1, Math.round(me.eta_seconds/60)) : Math.round(me.eta_seconds/300)*5} min left`;
+  const elapsed = Math.max(0, Math.round((Date.now() - Date.parse(n.run.started_at))/60000));
+  return `<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+    <div class="track"><div class="fill" style="width:${pct}%;background:${me.step==='verify' ? 'var(--good)' : 'var(--info)'}"></div></div>
+    <div class="sub" style="display:flex;gap:14px;flex-wrap:wrap"><span class="ink2">${esc(stepTxt)}</span>${inst?.detail && me.step==='install' ? `<span class="micro">${esc(inst.detail)}</span>` : ''}<div class="grow"></div><span>${pct}% · step ${['check','install','restart','verify'].indexOf(me.step)+1} of 4${eta ? ' · '+esc(eta) : ''}</span></div>
+    <div class="micro muted">Started ${clock(n.run.started_at)} · ${elapsed} min so far · keeps going if you close this page · <a href="#" data-log="${esc(n.run.id)}" data-n="${esc(n.name)}">watch the log</a></div></div>`;
+}
+function lastRunHtml(n){
+  const r = n.last_run; const me = r.nodes.find(x=>x.name===n.name); if(!me) return '';
+  const when = clock(r.finished_at);
+  if(me.status==='ok' && r.rehearsal) return `<div class="foot sub"><span class="good">✓ Rehearsal passed at ${when}</span> · nothing was changed · <a href="#" data-log="${esc(r.id)}" data-n="${esc(n.name)}">log</a></div>`;
+  if(me.status==='ok'){ const c = me.changed || {}; return `<div class="foot sub"><span class="good">✓ Updated at ${when}</span> · ${esc(c.release?.[0])} → ${esc(c.release?.[1] || me.after?.release)} · ${c.updates ? `${c.updates[0]} → ${c.updates[1]} package updates` : ''}${me.release_note ? ` · <span class="warn">${esc(me.release_note)}</span>` : ''} · <a href="#" data-log="${esc(r.id)}" data-n="${esc(n.name)}">log</a></div>`; }
+  if(me.status==='failed'){ const step = me.step; const err = me.steps?.[step]?.error || r.message;
+    const back = step==='restart' && n.reachable && n.boot_id && me.before?.boot_id && n.boot_id!==me.before.boot_id;
+    return `<div class="foot sub"><span class="${back?'warn':'crit'}">▲ ${back ? 'The install finished; the wait for the restart timed out' : 'Update stopped at '+esc(step)} · ${when}</span> · ${back ? `${esc(n.name)} is back on a new boot` : esc(err)} · <a href="#" data-log="${esc(r.id)}" data-n="${esc(n.name)}">log</a>${back ? ` <button class="btn primary" style="margin-left:8px" data-verify="${esc(r.id)}">it's back — verify now</button>` : ''}</div>`; }
+  if(r.status==='stopped') return `<div class="foot sub"><span class="warn">■ Stopped as asked at ${when}</span> after ${esc(me.step)} · <a href="#" data-log="${esc(r.id)}" data-n="${esc(n.name)}">log</a></div>`;
+  return '';
+}
+
+// ── interactions ─────────────────────────────────────────────────────────
+document.addEventListener('click', async e => {
+  if(!e.target.closest('#settingsPop,#settingsBtn')) $('#settingsPop').hidden = true;
+  const t = e.target.closest('[data-toggle],[data-update],[data-menu],[data-act],[data-pkgs],[data-stop],[data-log],[data-cluster-rename],[data-verify]');
+  if(!t){ if(!e.target.closest('.menu')){ state.menu=null; render(); } return; }
+  e.preventDefault();
+  if(t.dataset.toggle){ const n=t.dataset.toggle; state.open.has(n) ? state.open.delete(n) : state.open.add(n); render(); }
+  else if(t.dataset.pkgs){ openPackages(t.dataset.pkgs); }
+  else if(t.dataset.clusterRename){ const members = t.dataset.clusterRename.split('+'); const cur = (state.fleet.clusters||[]).find(c => c.members.join('+')===t.dataset.clusterRename); const nn = prompt(`Name for this cluster (blank to use the Spark names)`, cur?.name || ''); if(nn!==null){ try{ await api('/api/clusters/rename', {members, name:nn}); refresh(); }catch(err){ toast(err.message); } } }
+  else if(t.dataset.menu){ state.menu = state.menu===t.dataset.menu ? null : t.dataset.menu; render(); }
+  else if(t.dataset.update){ confirmUpdate(t.dataset.update); }
+  else if(t.dataset.stop){ await api(`/api/runs/${t.dataset.stop}/stop`, {}); toast('Will stop after the current step.'); }
+  else if(t.dataset.log){ showLog(t.dataset.log, t.dataset.n); }
+  else if(t.dataset.verify){ await api(`/api/runs/${t.dataset.verify}/verify`, {}); toast('Verifying…'); }
+  else if(t.dataset.act){ state.menu=null; const n=t.dataset.n;
+    if(t.dataset.act==='check'){ await api(`/api/nodes/${n}/check`, {}); toast(`Checking ${n}…`); }
+    if(t.dataset.act==='rehearse'){ confirmUpdate(n, true); }
+    if(t.dataset.act==='rename'){ const nn = prompt(`New name for ${n}`, n); if(nn && nn!==n){ try{ await api(`/api/nodes/${n}/rename`, {name:nn}); }catch(err){ toast(err.message); } } }
+    if(t.dataset.act==='remove'){ if(confirm(`Remove ${n} from the list? It stops being checked; its update history is kept.`)){ await api(`/api/nodes/${n}/remove`, {}); } }
+    if(t.dataset.act==='log'){ const node = state.fleet.nodes.find(x=>x.name===n); if(node?.last_run) showLog(node.last_run.id, n); else toast('No update has run on '+n+' yet.'); }
+    render(); refresh();
+  }
+});
+function needsPassword(n){ return n.sudo_passwordless !== true; }
+function confirmUpdate(name, rehearse=false){
+  const n = state.fleet.nodes.find(x=>x.name===name); if(!n) return;
+  const others = rehearse ? [] : (n.pair || []); const all = [name, ...others];
+  const fw = n.firmware_updates?.length || 0; const u = n.updates?.total || 0;
+  $('#cfTitle').textContent = rehearse ? `Rehearse an update on ${name}?` : `Update ${all.join(' and ')}?`;
+  $('#cfBody').innerHTML = rehearse ? `<p>Every step runs except the install itself and the restart. Nothing changes on ${esc(name)}.</p>` : [
+    n.release?.available ? `<p>This installs NVIDIA's <b>${esc(n.release.latest_name)}</b> release${others.length ? ' on both' : ''}: ${u} package updates${fw ? ` and firmware for ${fw} device${fw>1?'s':''}` : ''}, then restarts.</p>`
+                         : `<p>This installs ${u} package updates${fw ? ` and firmware for ${fw} device${fw>1?'s':''}` : ''}, then restarts.</p>`,
+    others.length ? `<p class="muted">${esc(name)} and ${esc(others.join(', '))} are linked, so ${all.length===2?'both are':'all of them are'} updated one after the other.</p>` : '',
+    n.dashboard_auto_update ? `<p class="muted">NVIDIA's own auto-updates will be turned off on ${esc(all.join(' and '))} first, so two installers never run at once.</p>` : '',
+    `<p class="muted">Takes ${fw ? 'about 35' : 'about 15'} minutes per Spark. If anything fails it stops and tells you.</p>`
+  ].join('');
+  const ask = needsPassword(n) || all.some(m => needsPassword(state.fleet.nodes.find(x=>x.name===m) || {}));
+  $('#cfPass').hidden = !ask; $('#cfPassword').value = ''; $('#cfUser').textContent = state.fleet.ssh_user || 'your user';
+  $('#cfWarn').hidden = !(ask && location.protocol !== 'https:');
+  $('#cfWarn').textContent = ask && location.protocol !== 'https:' ? 'This page is not on HTTPS, so the controller will refuse the password. Open it at https:// or through a TLS proxy.' : '';
+  $('#cfGo').textContent = rehearse ? `rehearse on ${name}` : `update ${all.join(' and ')}`;
+  $('#cfGo').onclick = async () => {
+    const password = ask ? $('#cfPassword').value : '';
+    if(ask && !password){ $('#cfPassword').focus(); return; }
+    try{ await api(`/api/nodes/${name}/${rehearse ? 'rehearse' : 'update'}`, password ? {password} : {}); confirmDlg.close(); toast(rehearse ? `Rehearsing on ${name}…` : `Updating ${all.join(' and ')}…`); state.open.delete(name); refresh(); }
+    catch(err){ $('#cfWarn').hidden = false; $('#cfWarn').textContent = err.message; }
+  };
+  confirmDlg.showModal(); if(ask) $('#cfPassword').focus();
+}
+async function showLog(runId, node){
+  state.logRun = {runId, node};
+  $('#logTitle').textContent = `${node} · update ${runId}`;
+  logDlg.showModal(); await pollLog();
+}
+async function pollLog(){
+  if(!state.logRun || !logDlg.open) return;
+  const {runId, node} = state.logRun;
+  try{ const j = await api(`/api/runs/${runId}/${node}/log`); const el=$('#logBody'); const atEnd = el.scrollTop+el.clientHeight >= el.scrollHeight-20; el.textContent = j.lines.join('\n') || '(nothing yet)'; if(atEnd) el.scrollTop = el.scrollHeight; }catch(e){}
+  setTimeout(pollLog, 3000);
+}
+$('#addBtn').onclick = () => { $('#testResult').textContent=''; $('#addHost').value=''; $('#addName').value=''; addDlg.showModal(); $('#addHost').focus(); };
+$('#addHost').addEventListener('input', () => { const h=$('#addHost').value.trim(); if(!$('#addName').value && /^[a-z]/i.test(h) && !/^\d/.test(h)) $('#addName').value = h.split('.')[0]; });
+$('#testBtn').onclick = async () => { const host=$('#addHost').value.trim(); if(!host) return; $('#testResult').innerHTML='<span class="muted">connecting…</span>'; const j = await api('/api/test', {host}); $('#testResult').innerHTML = j.ok ? `<span class="pill good">✓ reachable${j.board ? ' · '+esc(j.board) : ''}</span>` : `<span class="crit">✗ ${esc(j.error || 'could not connect')}</span>`; };
+$('#addGo').onclick = async () => { const host=$('#addHost').value.trim(), name=$('#addName').value.trim() || host.split('.')[0]; try{ await api('/api/nodes', {name, host}); addDlg.close(); toast(`Added ${name} — checking it now.`); refresh(); }catch(err){ $('#testResult').innerHTML = `<span class="crit">${esc(err.message)}</span>`; } };
+$('#checkAll').onclick = async () => { await api('/api/check', {}); toast('Checking every Spark…'); };
+
+// ── theme: the same ids, labels and storage shape as spark-dash ────────────
+const THEMES = [['auto','Auto'],['dark','Dark'],['light','Light'],['cyberpunk','Cyberpunk'],['forest','Forest'],['slate','Slate'],['paper','Paper'],['contrast','High contrast']];
+const THEME_KEY = 'spark-fleet-updates.theme.v1';
+const themeState = { current: (()=>{ try{ const v=localStorage.getItem(THEME_KEY); return THEMES.some(t=>t[0]===v) ? v : 'dark'; }catch(e){ return 'dark'; } })() };
+function applyTheme(){ const id = themeState.current; const resolved = id==='auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : id; document.documentElement.dataset.theme = resolved; renderThemeChoices(); }
+function setTheme(id){ themeState.current = id; try{ localStorage.setItem(THEME_KEY, id); }catch(e){} applyTheme(); }
+function renderThemeChoices(){ $('#themeChoices').innerHTML = THEMES.map(([id,label]) => `<button class="${themeState.current===id?'active':''}" data-theme-id="${id}" aria-pressed="${themeState.current===id}">${label}</button>`).join(''); }
+$('#themeChoices').addEventListener('click', e => { const b = e.target.closest('[data-theme-id]'); if(b) setTheme(b.dataset.themeId); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(themeState.current==='auto') applyTheme(); });
+$('#settingsBtn').onclick = e => { e.stopPropagation(); const p=$('#settingsPop'); p.hidden = !p.hidden; };
+applyTheme();
+
+// ── the package popup: paginated, like the Dashboard's list ───────────────
+const PER_KEY = 'spark-fleet-updates.perpage.v1';
+const pkgState = { node:null, page:0, per: (()=>{ try{ return +localStorage.getItem(PER_KEY) || 25; }catch(e){ return 25; } })(), filter:'' };
+function openPackages(name){ pkgState.node = name; pkgState.page = 0; pkgState.filter = ''; $('#pkgFilter').value=''; $('#pkgPer').value = String(pkgState.per); renderPackages(); pkgDlg.showModal(); }
+function renderPackages(){
+  const n = state.fleet?.nodes.find(x=>x.name===pkgState.node); if(!n) return;
+  const all = n.updates?.packages || []; const q = pkgState.filter.trim().toLowerCase();
+  const rows = q ? all.filter(p => p.name.toLowerCase().includes(q) || (p.security && 'security'.includes(q)) || (p.new && 'new'.includes(q))) : all;
+  const per = pkgState.per, pages = Math.max(1, Math.ceil(rows.length / per)); pkgState.page = Math.min(pkgState.page, pages-1);
+  const start = pkgState.page * per, slice = rows.slice(start, start+per);
+  $('#pkgTitle').textContent = `Package updates on ${pkgState.node} · ${all.length}${n.updates?.security!=null ? ` (${n.updates.security} security)` : ''}`;
+  $('#pkgBody').innerHTML = slice.map(p => `<tr><td>${esc(p.name)}</td><td class="muted">${esc(p.from || '—')}</td><td class="ink2">${esc(p.to)}</td><td class="${p.new?'good':p.security?'warn':'muted'}">${p.new ? 'new' : p.security ? 'security' : esc(p.source)}</td></tr>`).join('') || `<tr><td colspan="4" class="muted">nothing matches</td></tr>`;
+  $('#pkgRange').textContent = rows.length ? `${start+1}–${Math.min(start+per, rows.length)} of ${rows.length}${q ? ' matching' : ''}` : '';
+  $('#pkgPage').textContent = `${pkgState.page+1} / ${pages}`;
+  $('#pkgPrev').disabled = pkgState.page===0; $('#pkgNext').disabled = pkgState.page>=pages-1;
+}
+$('#pkgPer').onchange = () => { pkgState.per = +$('#pkgPer').value; pkgState.page = 0; try{ localStorage.setItem(PER_KEY, pkgState.per); }catch(e){} renderPackages(); };
+$('#pkgPrev').onclick = () => { pkgState.page--; renderPackages(); };
+$('#pkgNext').onclick = () => { pkgState.page++; renderPackages(); };
+$('#pkgFilter').oninput = () => { pkgState.filter = $('#pkgFilter').value; pkgState.page = 0; renderPackages(); };
+
+function renderNextCheck(){
+  const f = state.fleet, el = $('#nextCheck'); if(!f) return;
+  if(f.nodes.some(n=>n.checking)){ el.textContent = 'Checking now…'; return; }
+  if(!f.next_sweep){ el.textContent = ''; return; }
+  const mins = Math.round((Date.parse(f.next_sweep) - Date.now())/60000);
+  el.textContent = mins <= 0 ? 'Next check: any moment' : `Next check in: ${mins} ${mins===1?'minute':'minutes'}`;
+}
+setInterval(renderNextCheck, 30000);
+
+async function refresh(){ try{ state.fleet = await api('/api/fleet'); render(); }catch(e){ $('#summary').textContent = 'controller unreachable — retrying'; } }
+(async function loop(){ await refresh(); const busy = state.fleet?.nodes?.some(n=>n.run || n.checking); setTimeout(loop, busy ? 3000 : 10000); })();
+</script>
+</body>
+</html>

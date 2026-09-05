@@ -1,0 +1,19 @@
+# spark-fleet-updates — the controller, as one container.
+# Settings live in .env (copy .env.example). Nothing here needs editing.
+services:
+  spark-fleet-updates:
+    build: .
+    image: spark-fleet-updates:latest
+    container_name: spark-fleet-updates
+    restart: unless-stopped
+    ports:
+      - "${SPARK_FLEET_PORT:-8080}:8080"        # host port; change it in .env if 8080 is taken
+    environment:
+      SPARK_FLEET_SSH_USER: ${SPARK_FLEET_SSH_USER:?set SPARK_FLEET_SSH_USER in .env — the login on each Spark}
+      SPARK_FLEET_INTERVAL_MIN: ${SPARK_FLEET_INTERVAL_MIN:-60}
+      SPARK_FLEET_TLS: ${SPARK_FLEET_TLS:-auto}          # auto = HTTPS with a self-signed cert; off = plain HTTP behind your own proxy
+      SPARK_FLEET_TLS_CERT: ${SPARK_FLEET_TLS_CERT:-}
+      SPARK_FLEET_TLS_KEY: ${SPARK_FLEET_TLS_KEY:-}
+    volumes:
+      - ./data:/data                             # inventory, posture, run records, release list
+      - ./ssh:/ssh:ro                            # id_ed25519 that the Sparks trust
