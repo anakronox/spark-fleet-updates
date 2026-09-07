@@ -32,7 +32,12 @@ so "what changed?" always has an answer.
 **What you get**
 
 - Each Spark on one line: **up to date**, **update available**, or **waiting
-  on firmware**, with the number of updates and how many are security fixes.
+  on ASUS firmware** (or whoever built the board), with the number of updates
+  and how many are security fixes. A partner-built Spark that is as current as
+  its vendor has published is told apart from one that is genuinely behind:
+  the page shows the software, the vendor's firmware bundle and NVIDIA's
+  baseline as three separate lines, so "nothing to install" and "not on the
+  latest" can both be true and both be visible.
 - **Show updates** — the NVIDIA release and its notes, each firmware device
   before → after, and the full package list.
 - **Update** — one button per Spark, with a confirmation first.

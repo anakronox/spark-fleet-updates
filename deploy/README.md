@@ -117,8 +117,12 @@ see `✓ reachable · <board vendor>` — then **add**. The first check runs
 immediately and takes about 10 seconds per Spark. Repeat for each one.
 
 You'll see, per Spark: **up to date with NVIDIA**, **update available**, or
-**waiting on firmware**, with the number of package updates. Sparks that are
-cabled together over their 200 GbE ports appear grouped automatically.
+**waiting on ASUS firmware** (naming whoever built the board), with the number
+of package updates. The last one means the Spark has everything its vendor has
+published and NVIDIA's newer firmware has not reached that vendor's bundle yet —
+nothing to install, and not your doing. Open **show updates ▾** to see the
+software, the vendor's bundle and NVIDIA's baseline as three lines. Sparks that
+are cabled together over their 200 GbE ports appear grouped automatically.
 
 That's the deployment. Everything from here is use.
 

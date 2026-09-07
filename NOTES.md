@@ -127,6 +127,52 @@ plain-HTTP refusal and proxy allowance both behave. A Spark with `NOPASSWD:
 ALL` is detected and not asked — the lab's own fleet keeps that, by choice,
 on a trusted LAN.
 
+## Decided: partner boards are judged against their vendor, on three lines
+
+**2026-09-07.** Prompted by a second opinion (ChatGPT, reviewing where ASUS is
+in its GX10 firmware cycle), which was right on the point and wrong on two
+details, both checked against the boards before shipping.
+
+**The point.** ASUS's newest published GX10 bundle is 0105 (2026-08-11).
+Through `dmidecode -t 45` it reads as FLASH 2.152.15 / EC 3.3.2, which is exactly
+NVIDIA's *April 2026* firmware baseline. July 2026 wants 2.155.11 / 3.5.8, which
+only NVIDIA-built boards have. So a GX10 on 0105 with zero package updates is
+simultaneously "as current as ASUS allows" and "not on NVIDIA's latest", and a
+single status word cannot say both. It now says `waiting on ASUS firmware`,
+and the expanded row shows three lines — **Software**, **Platform firmware**,
+**NVIDIA July 2026 baseline** — each judged on its own evidence. The posture
+record carries them as `software`, `platform_firmware` and `firmware_gap`.
+
+**The two corrections.**
+
+- *Compare in NVIDIA's numbering, not the vendor's.* ASUS lists "SOC FW 3.0.7";
+  the recipes say "SOCFW 2.155.11"; the board reports the recipe-style number.
+  The scorer's found-versus-expected is the comparison shown; ASUS's component
+  list is kept in the vendor table only for the person reading it.
+- *Key on `board_vendor`, never on `GX10DGX.*`.* NVIDIA's own checker branches
+  on the board vendor; so does `vendors.platform_firmware()`. Every partner
+  board takes the partner path; the model string only selects which bundle
+  regex to read the BIOS version with. An unlisted partner still gets
+  "pending vendor firmware" — just without a "vendor's newest" to compare to.
+
+**What the second opinion missed, and the three lines catch.** At the time,
+`sparky` was *not* as updated as it could be: its packages sat at OTA2.2 (an
+ordinary apt run fixed that) and its USB-PD controller had not taken 0105's PD
+5.22 while `sparkjr`'s had. A GX10 special case reading "waiting on vendor"
+would have covered both. Software is therefore judged on packages, kernel and
+driver alone; USB-PD stays in the outstanding list with found → expected.
+
+**TPM.** The GX10 answers the TPM row of `dmidecode -t 45` with `SOCTS`, not a
+version, so NVIDIA's TPM check can never pass on that board. It is reported as
+"not reported by this board (SOCTS)" and excluded from the outstanding count,
+rather than shown as forever behind.
+
+**The vendor table is hand-maintained** (`spark_fleet/vendors.py`), carries the
+date each entry was last checked, and the page prints that date. There is no
+API for a vendor's download page; a stale table should read as stale.
+`bios_version`, `bios_date` and `product_name` are three more world-readable
+sysfs reads in the collector; no new privilege.
+
 ## Design constraints inherited from NVIDIA's own model
 
 - **Agentless.** Fan SSH out from a central host; do not install a resident
@@ -234,7 +280,9 @@ on a trusted LAN.
   NVIDIA-built `sparketa` got them. NVIDIA's own Dashboard would keep saying
   "System Update Available" with nothing to install. So the verify gate is
   "nothing left to install and no restart pending", and the release gap is
-  reported as "waiting on firmware", with the Update button disabled.
+  reported as "waiting on ASUS firmware", with the Update button disabled —
+  see "Decided: partner boards" below for how that is told apart from a Spark
+  that is genuinely behind.
 - **`nvidia-system-station-{apps,games}` fail the recipe check on `sparky` by
   design.** They were removed deliberately. They are pulled in by
   `nvidia-system-station`, not by the OTA metapackage, so `full-upgrade` never

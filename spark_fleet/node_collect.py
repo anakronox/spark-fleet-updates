@@ -36,6 +36,11 @@ def read(path):
 out["hostname"] = read("/etc/hostname").strip()
 out["boot_id"] = read("/proc/sys/kernel/random/boot_id").strip()
 out["board_vendor"] = read("/sys/class/dmi/id/board_vendor").strip()
+# which vendor bundle the platform firmware is on: the BIOS version string carries
+# it on partner boards (ASUS: GX10DGX.0105.…), and all three are world-readable
+out["product_name"] = read("/sys/class/dmi/id/product_name").strip()
+out["bios_version"] = read("/sys/class/dmi/id/bios_version").strip()
+out["bios_date"] = read("/sys/class/dmi/id/bios_date").strip()
 out["kernel"] = sh("uname", ["uname", "-r"]).strip()
 drv = ""
 for line in sh("nvidia-smi", ["nvidia-smi", "-q"], timeout=30).splitlines():

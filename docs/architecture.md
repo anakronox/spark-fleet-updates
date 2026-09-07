@@ -233,7 +233,7 @@ One screen, one row per Spark:
 
 | element | what it shows or does | backed by |
 |---|---|---|
-| status | "up to date with NVIDIA" or "update available · July 2026", plus "N updates, M security" | posture record |
+| status | "up to date with NVIDIA", "update available · July 2026", or "waiting on ASUS firmware" — the last for a partner board with nothing to install whose vendor has not published NVIDIA's newer firmware; plus "N updates, M security" | posture record: `software`, `platform_firmware`, `firmware_gap` |
 | show updates ▾ | the release and its description, each firmware device now → after, the package list; says when the network card can't be checked | posture + planner |
 | update | one button; confirms, then runs the executor's state machine and shows a progress bar and a log inline; keeps going if the page is closed | executor, transient unit |
 | afterwards | "Updated to July 2026 at 14:17 · what changed" | run record, scorer before → after |

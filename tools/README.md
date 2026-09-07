@@ -9,6 +9,16 @@ to run on the control host against facts collected over SSH.
 | `collect_facts.sh` | Collects one node's facts over SSH. Unprivileged apart from two `sudo -n` commands. `--oracle` also runs the node's own root checker. |
 | `validate_against_nodes.py` | Scores the collected facts and diffs the result against that oracle, per node and per recipe. |
 
+## Unit tests
+
+Stdlib `unittest`, against the committed fixtures — the posture's three lines
+(software, platform firmware, NVIDIA baseline) on a mixed fleet, and the
+vendor table:
+
+```
+python3 -m unittest discover -s tests
+```
+
 ## Re-validating
 
 Against the committed fixtures, offline:

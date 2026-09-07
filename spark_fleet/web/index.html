@@ -161,8 +161,17 @@ function statusOf(n){
   if(n.reachable===false) return {cls:'crit', text:'unreachable'};
   if(n.reachable==null) return {cls:'', text:'not checked yet'};
   if(n.firmware_readable===false) return {cls:'warn', text:"can't check firmware"};
-  if(n.release.available && !n.updates?.total && !(n.firmware_updates||[]).length) return {cls:'warn', text:'waiting on firmware'};
-  if(n.release.available) return {cls:'warn', text:'update available'};
+  const fg = n.firmware_gap, pf = n.platform_firmware;
+  if(n.updates?.total || (n.firmware_updates||[]).length) return {cls:'warn', text:'update available'};
+  if(n.release.available){
+    // nothing to install, yet not on the latest: say WHO is holding it up, so a
+    // partner board that is as current as its vendor allows is not read as neglected
+    if(fg?.state==='pending-vendor' && pf?.state==='behind') return {cls:'warn', text:`${pf.vendor} firmware ${pf.newest.bundle} available`};
+    if(fg?.state==='pending-vendor') return {cls:'warn', text:`waiting on ${fg.vendor} firmware`};
+    if(fg?.state==='pending-nvidia') return {cls:'warn', text:'waiting on NVIDIA firmware'};
+    const held = (n.software?.behind||[]).length;
+    return {cls:'warn', text: held ? `${held} package${held===1?'':'s'} held back` : 'not on the latest'};
+  }
   return {cls:'good', text:'up to date with NVIDIA'};
 }
 function lineOf(n){
@@ -171,7 +180,19 @@ function lineOf(n){
   if(!n.release) return '';
   const u = n.updates || {};
   if(n.firmware_readable===false) return `firmware needs the two read-only sudo rules (see the guide) · ${u.total!=null ? `${u.total} package updates, ${u.security} security` : ''}`; const cnt = u.total!=null ? `${u.total} updates, ${u.security} security` : 'counting…';
-  if(n.release.available && !u.total && !(n.firmware_updates||[]).length) return `on ${n.release.on_name} · waiting for the vendor's ${n.release.latest_name} firmware · nothing to install`;
+  if(n.release.available && !u.total && !(n.firmware_updates||[]).length){
+    const fg = n.firmware_gap || {}, pf = n.platform_firmware || {}, sw = n.software || {};
+    const swTxt = sw.state==='current' ? `software current for ${n.release.latest_name}` : `on ${n.release.on_name}`;
+    if(fg.state==='pending-vendor' && pf.newest){
+      const vend = pf.state==='current' ? `${pf.vendor} firmware ${pf.installed} is the vendor's newest`
+                 : pf.state==='behind' ? `${pf.vendor} firmware ${pf.installed}, vendor has ${pf.newest.bundle} — apply it their way`
+                 : `${pf.vendor} firmware ${pf.installed||'unknown'}`;
+      return `${swTxt} · ${vend} · NVIDIA ${n.release.latest_name} firmware pending from ${pf.vendor}`;
+    }
+    if(fg.state==='pending-vendor') return `${swTxt} · NVIDIA ${n.release.latest_name} firmware pending from ${fg.vendor||'the board vendor'} · nothing to install`;
+    if(fg.state==='pending-nvidia') return `${swTxt} · NVIDIA ${n.release.latest_name} firmware not offered to this board yet · nothing to install`;
+    return `${swTxt} · held back: ${(sw.behind||[]).map(f=>f.name).join(', ') || 'checks failing'} · nothing to install`;
+  }
   if(n.release.available) return `NVIDIA ${n.release.latest_name} release · ${cnt}`;
   return u.total ? `${u.total} routine Ubuntu updates, ${u.security} security` : 'no updates';
 }
@@ -181,9 +202,9 @@ function render(){
   const nodes = f.nodes;
   const installable = n => n.reachable && (n.updates?.total || (n.firmware_updates||[]).length);
   const withUpd = nodes.filter(installable).length;
-  const waitingFw = nodes.filter(n => n.reachable && n.release?.available && !installable(n)).length;
+  const waitingFw = nodes.filter(n => n.reachable && n.release?.available && !installable(n) && n.firmware_gap?.state==='pending-vendor').length;
   const updating = nodes.filter(n=>n.run).length;
-  $('#summary').textContent = nodes.length ? `${nodes.length} Spark${nodes.length>1?'s':''} · ${updating ? updating+' updating · ' : ''}${withUpd} ${withUpd===1?'has':'have'} updates${waitingFw ? ` · ${waitingFw} waiting on firmware` : ''} · last checked ${clock(f.last_sweep)}` : 'no Sparks yet';
+  $('#summary').textContent = nodes.length ? `${nodes.length} Spark${nodes.length>1?'s':''} · ${updating ? updating+' updating · ' : ''}${withUpd} ${withUpd===1?'has':'have'} updates${waitingFw ? ` · ${waitingFw} waiting on vendor firmware` : ''} · last checked ${clock(f.last_sweep)}` : 'no Sparks yet';
   const list = $('#list');
   if(!nodes.length){ list.innerHTML = `<div class="empty">No Sparks yet. Add one with the button above.</div>`; renderNextCheck(); return; }
   const color = Object.fromEntries(nodes.map((n,i) => [n.name, COLORS[i % COLORS.length]]));
@@ -240,12 +261,39 @@ function menuHtml(n){ return `<div class="menu"><button data-act="check" data-n=
 function expandHtml(n){
   const r = n.release, u = n.updates || {packages:[]}, fw = n.firmware_updates || [];
   const pkgs = u.packages || []; const shown = pkgs.slice(0, 8);
-  const behindFw = r.behind.filter(b=>b.kind==='firmware');
+  const fg = n.firmware_gap || {state:'current', outstanding:[], not_reported:[]};
+  const pf = n.platform_firmware || {}, sw = n.software || {};
+  const behindFw = fg.outstanding || [];
+  // Three lines, kept apart: what apt can move; what the board's vendor has
+  // published; what NVIDIA's baseline still wants and who can supply it. A
+  // partner board that is as current as its vendor allows must not read the
+  // same as one that is genuinely behind — and neither must hide the other.
+  const missing = (sw.missing||[]).length ? ` <span class="micro muted">· not installed: ${esc(sw.missing.map(f=>f.name).join(', '))}</span>` : '';
+  const swLine = sw.state==='installable' ? `${u.total ?? 0} package update${(u.total??0)===1?'':'s'} to install`
+               : sw.state==='current' ? `<span class="good">current for ${esc(r.latest_name)}</span>${missing}`
+               : `<span class="warn">held</span> — ${esc((sw.behind||[]).map(f=>`${f.name} ${f.installed} → ${f.target}`).join(', '))} with nothing apt can install${missing}`;
+  const pfLine = pf.state==='nvidia-release' ? `NVIDIA-built · firmware arrives with NVIDIA's release`
+               : pf.newest ? `${esc(pf.vendor)} ${esc(pf.model)} bundle <span class="ink2">${esc(pf.installed||'unknown')}</span>${pf.bios_date?` (BIOS ${esc(pf.bios_date)})`:''} · vendor's newest is ${esc(pf.newest.bundle)}, published ${esc(pf.newest.published)} · `
+                 + (pf.state==='current' ? `<span class="good">current per ${esc(pf.vendor)}</span>` : pf.state==='behind' ? `<span class="warn">newer bundle available from ${esc(pf.vendor)}</span>` : pf.state==='newer' ? `newer than the vendor table knows` : `bundle not recognised`)
+                 + ` <span class="micro muted">(table checked ${esc(pf.newest.checked)})</span>`
+               : `${esc(pf.vendor||'unknown vendor')}${pf.bios_version?` · BIOS ${esc(pf.bios_version)}`:''} · no vendor table entry for this board`;
+  const outstanding = behindFw.map(o=>esc(o.label)).join(', ');
+  const nvLine = fg.state==='current' ? `<span class="good">met</span>${(fg.not_reported||[]).length ? '' : ''}`
+               : fg.state==='installable' ? `firmware updates offered — press Update`
+               : fg.state==='pending-vendor' ? `<span class="warn">pending ${esc(fg.vendor||'vendor')} firmware</span> · outstanding: ${outstanding}`
+               : `<span class="warn">pending NVIDIA firmware</span> · outstanding: ${outstanding}`;
+  const notRep = (fg.not_reported||[]).length ? `<div class="micro muted" style="margin-top:4px">${esc(fg.not_reported.map(o=>`${o.label}: not reported by this board (${short(o.installed)})`).join(' · '))}</div>` : '';
+  const lines = `<div class="li"><span class="muted">Software</span><span>${swLine}</span></div>
+       <div class="li"><span class="muted">Platform firmware</span><span>${pfLine}</span></div>
+       <div class="li"><span class="muted">NVIDIA ${esc(r.latest_name)} baseline</span><span>${nvLine}</span></div>${notRep}`;
   const rel = r.available
     ? `<div class="h">NVIDIA ${esc(r.latest_name)} release</div><div class="ink2" style="line-height:1.5">${esc(r.description)}</div>
        <div style="margin-top:10px"><a href="${esc(r.release_notes_url)}" target="_blank" rel="noopener">See release notes</a></div>
-       <div class="micro muted" style="margin-top:14px">${esc(n.name)} is on the ${esc(r.on_name)} release (${r.checks_passed} of ${r.checks_total} checks pass for ${esc(r.latest_name)}).</div>`
-    : `<div class="h">NVIDIA release</div><div class="ink2">On ${esc(r.on_name)} — the latest.</div><div class="micro muted" style="margin-top:8px">${r.checks_passed} of ${r.checks_total} checks pass${r.behind.length ? ' · behind on: '+esc(r.behind.map(b=>b.label).join(', ')) : ''}.</div>`;
+       <div style="margin-top:12px">${lines}</div>
+       <div class="micro muted" style="margin-top:10px">${esc(n.name)} scores as the ${esc(r.on_name)} release (${r.checks_passed} of ${r.checks_total} checks pass for ${esc(r.latest_name)}).</div>`
+    : `<div class="h">NVIDIA release</div><div class="ink2">On ${esc(r.on_name)} — the latest.</div>
+       <div style="margin-top:12px">${lines}</div>
+       <div class="micro muted" style="margin-top:8px">${r.checks_passed} of ${r.checks_total} checks pass.</div>`;
   const fwRows = fw.length ? fw.map(f=>`<div class="li"><span>${esc(f.device)}</span><span class="muted">${esc(f.now)} → <span class="ink2">${esc(f.after)}</span>${f.size?` <span class="micro">${mb(f.size)}</span>`:''}</span></div>`).join('')
                 : (behindFw.length ? behindFw.map(b=>`<div class="li"><span>${esc(b.label)}</span><span class="muted">${esc(short(b.installed))} → <span class="ink2">${esc(b.target)}</span></span></div>`).join('') : `<div class="muted">none</div>`);
   const cx7 = n.cx7?.state==='not-verifiable' ? `<div class="micro muted" style="margin-top:10px">Network card firmware can't be checked until a cable is plugged in.</div>`

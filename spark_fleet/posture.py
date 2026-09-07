@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .otascore import (NodeFacts, get_all_scores, get_detected, is_ota_available,
                        load_recipes, parse_dpkg_query, parse_fwupd_devices, summary)
+from .vendors import platform_firmware
 
 _INST = re.compile(r"^Inst (\S+)(?: \[([^\]]*)\])? \(([^ )]+) ([^)]*)\)")
 _SUMMARY = re.compile(r"(\d+) upgraded, (\d+) newly installed, (\d+) to remove")
@@ -78,6 +79,79 @@ def parse_fwupd_updates(text: str) -> list[dict]:
 _FW_NAMES = {"SOCFW": "System firmware", "EC": "Embedded controller", "EC Unfused": "Embedded controller (unfused)",
              "USBPD": "USB-C power controller", "TPM": "TPM firmware", "CX7": "Network card (ConnectX-7)"}
 
+# A firmware "version" the board reports that is not a version at all. The ASUS
+# GX10 answers the TPM row of dmidecode -t 45 with `SOCTS`, so NVIDIA's TPM
+# check can never pass there; that is "not reported by this board", not "behind".
+_VERSIONISH = re.compile(r"\d+\.\d+")
+
+
+def _firmware_gap(latest_score, fw_updates: list[dict], is_fe: bool, platform: dict) -> dict:
+    """NVIDIA's firmware baseline against this board, and who can close the gap.
+
+    The three states that matter to a person, kept apart on purpose:
+      installable     fwupd is offering firmware — press Update
+      pending-vendor  a partner board with nothing offered: the vendor has not
+                      published NVIDIA's newer firmware yet. Not "outdated".
+      pending-nvidia  an NVIDIA-built board with nothing offered — NVIDIA has
+                      not pushed it to this board yet
+    plus `current` when every firmware check passes."""
+    outstanding, not_reported = [], []
+    for r in latest_score.firmware_results:
+        if r.passed:
+            continue
+        row = {"name": r.name, "label": _FW_NAMES.get(r.name, r.name),
+               "installed": r.found or None, "target": r.expected}
+        if r.found and not _VERSIONISH.search(r.found):
+            row["not_reported"] = True
+            not_reported.append(row)
+        else:
+            outstanding.append(row)
+    if not outstanding:
+        state = "current"
+    elif fw_updates:
+        state = "installable"
+    elif not is_fe:
+        state = "pending-vendor"
+    else:
+        state = "pending-nvidia"
+    return {"state": state, "vendor": platform.get("vendor"), "outstanding": outstanding,
+            "not_reported": not_reported}
+
+
+def _software(scores, latest_score, apt_total) -> dict:
+    """The software half of the release, judged on packages, kernel and driver
+    alone — the part apt can move on any board, whoever built it.
+
+    A failing check is one of two very different things, and they are kept
+    apart: `behind` — installed, but older than the release wants, which an
+    update should fix — and `missing` — not installed at all. Missing does not
+    hold a release back: on sparky two station packages were removed on
+    purpose, they are pulled in by a package the OTA metapackage does not
+    depend on, and `full-upgrade` will never bring them back. Judging them as
+    "behind" made a fully updated board read as stuck on OTA1.1, the last
+    release that did not list them.
+
+    `on` is the newest stable release whose software checks pass, missing
+    packages excepted. `held` means something installed is too old and yet apt
+    has nothing to install — a real anomaly worth a look."""
+    def sw(s):
+        return s.package_results + s.software_results
+
+    def row(r):
+        return {"kind": "software" if r in latest_score.software_results else "package",
+                "name": r.name, "installed": r.found or None, "target": r.expected}
+    behind = [row(r) for r in sw(latest_score) if not r.passed and r.found]
+    missing = [row(r) for r in sw(latest_score) if not r.passed and not r.found]
+    stable = sorted((s for s in scores if not s.recipe.is_ebeta),
+                    key=lambda s: s.recipe.release_date, reverse=True)
+    on = next((s for s in stable if all(r.passed or not r.found for r in sw(s))), None)
+    state = "installable" if apt_total else ("held" if behind else "current")
+    return {"state": state, "on": on.recipe.name if on else None,
+            "on_name": on.recipe.external_name if on else None,
+            "behind": behind, "missing": missing,
+            # kept for readers of the earlier shape
+            "failing": behind + missing}
+
 
 def build(node: dict, facts: dict, recipes_dir: Path) -> dict:
     recipes = load_recipes(recipes_dir)
@@ -116,11 +190,22 @@ def build(node: dict, facts: dict, recipes_dir: Path) -> dict:
 
     inhibitors_block = [l for l in facts.get("inhibitors", "").splitlines() if l.strip().endswith("block")]
 
+    fw_updates = parse_fwupd_updates(facts.get("fwupd_updates", ""))
+    platform = platform_firmware(facts.get("board_vendor", ""), facts.get("product_name", ""),
+                                 facts.get("bios_version", ""), facts.get("bios_date", ""))
+    gap = _firmware_gap(latest_score, fw_updates, nf.is_nvidia_fe, platform)
+    software = _software(scores, latest_score, total)
+
     return {
         "name": node["name"], "host": node["host"], "reachable": True,
         "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "hostname": facts.get("hostname"), "board": facts.get("board_vendor"),
         "board_kind": "NVIDIA-built" if nf.is_nvidia_fe else "OEM-built",
+        # the three lines the page shows, kept apart: what apt can move, what the
+        # board's vendor has published, and what NVIDIA's baseline still wants
+        "software": software,
+        "platform_firmware": platform,
+        "firmware_gap": gap,
         "kernel": facts.get("kernel"), "driver": facts.get("driver"), "boot_id": facts.get("boot_id"),
         "release": {
             "on": detected.recipe.name, "on_name": detected.recipe.external_name,
@@ -133,7 +218,7 @@ def build(node: dict, facts: dict, recipes_dir: Path) -> dict:
         },
         "updates": {"total": total, "security": security, "as_of": _iso(facts.get("updates_available_mtime")),
                     "counts": apt["counts"], "packages": apt["packages"]},
-        "firmware_updates": parse_fwupd_updates(facts.get("fwupd_updates", "")),
+        "firmware_updates": fw_updates,
         "cx7": cx7,
         "reboot": {"required": bool(facts.get("reboot_required")), "packages": facts.get("reboot_required_pkgs", []),
                    "blocking_inhibitors": inhibitors_block},
