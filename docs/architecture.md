@@ -250,8 +250,19 @@ person thinks: release names, counts, plain verbs.
 
 Nothing in the GUI talks to a Spark directly; it reads files the service
 wrote and asks the service to start an update. The service should live on a
-host that is not a Spark — it reboots them. `spark-dash` stays read-only and
-may consume `posture/*.json`; it never gets a button.
+host that is not a Spark — it reboots them.
+
+**`spark-dash` has the button too, since 2026-09-16** — this paragraph used
+to say it never would. Its backend is a typed proxy in front of this
+service's JSON API (`/api/fleet`, check, update, rehearse, stop, verify, the
+log; never add/rename/remove), and its frontend draws its own view of the
+same posture records. The dashboard holds no SSH key, no password and no
+node access: every control there is a POST forwarded here, and every guard
+above still applies. In that layout this container runs with
+`SPARK_FLEET_TLS=off` on the dashboard's compose network, and the
+dashboard's backend forwards the *real* `X-Forwarded-Proto` — so the
+password rule in §3 sees the truth: accepted through the dashboard's TLS
+tunnel, refused on its plain-HTTP LAN.
 
 ## 5. Safety properties, and where each comes from
 
