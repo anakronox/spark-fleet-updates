@@ -12,7 +12,6 @@ where it is and attaches what it saw; nothing retries on its own."""
 from __future__ import annotations
 
 import json
-import re
 import shlex
 import threading
 import time
