@@ -193,8 +193,22 @@ function lineOf(n){
     if(fg.state==='pending-nvidia') return `${swTxt} · NVIDIA ${n.release.latest_name} firmware not offered to this board yet · nothing to install`;
     return `${swTxt} · held back: ${(sw.behind||[]).map(f=>f.name).join(', ') || 'checks failing'} · nothing to install`;
   }
-  if(n.release.available) return `NVIDIA ${n.release.latest_name} release · ${cnt}`;
-  return u.total ? `${u.total} routine Ubuntu updates, ${u.security} security` : 'no updates';
+  const pin = pinnedOf(n), pinned = pin ? ` · ${pin.text}` : '';
+  if(n.release.available) return `NVIDIA ${n.release.latest_name} release · ${cnt}${pinned}`;
+  if(u.total) return `${u.total} routine Ubuntu updates, ${u.security} security${pinned}`;
+  return pin ? `no updates it may install · ${pin.text}` : 'no updates';
+}
+
+// What a person pinned here with apt-mark hold. NOT the "held back" above:
+// that is NVIDIA's release not fitting, this is someone's decision. A held
+// package never reaches the plan, so without this a pinned Spark reads as
+// having nothing to install.
+function pinnedOf(n){
+  const held = (n.updates && n.updates.held) || [];
+  if(!held.length) return null;
+  const kept = ((n.updates && n.updates.kept_back) || []).length;
+  const pkgs = `${held.length} package${held.length===1?'':'s'} pinned here`;
+  return {count: held.length, kept, text: kept > held.length ? `${pkgs}, ${kept} kept back` : pkgs};
 }
 
 function render(){
@@ -375,6 +389,7 @@ function confirmUpdate(name, rehearse=false){
                          : `<p>This installs ${u} package updates${fw ? ` and firmware for ${fw} device${fw>1?'s':''}` : ''}, then restarts.</p>`,
     others.length ? `<p class="muted">${esc(name)} and ${esc(others.join(', '))} are linked, so ${all.length===2?'both are':'all of them are'} updated one after the other.</p>` : '',
     n.dashboard_auto_update ? `<p class="muted">The DGX Dashboard's own updater is paused on ${esc(all.join(' and '))} while this installs, so two installers never run at once, and resumed the moment the install ends.</p>` : '',
+    all.map(m => { const p = pinnedOf(state.fleet.nodes.find(x=>x.name===m) || {}); return p ? `<p class="muted">${p.count} package${p.count===1?' is':'s are'} pinned on ${esc(m)} and will not be installed${p.kept>p.count?`, holding back ${p.kept} in total`:''}. Unpin with <code>apt-mark unhold</code> on the Spark if that is not what you want.</p>` : ''; }).join(''),
     `<p class="muted">Takes ${fw ? 'about 35' : 'about 15'} minutes per Spark. If anything fails it stops and tells you.</p>`
   ].join('');
   const ask = needsPassword(n) || all.some(m => needsPassword(state.fleet.nodes.find(x=>x.name===m) || {}));

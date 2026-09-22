@@ -18,6 +18,7 @@ from .vendors import platform_firmware
 
 _INST = re.compile(r"^Inst (\S+)(?: \[([^\]]*)\])? \(([^ )]+) ([^)]*)\)")
 _SUMMARY = re.compile(r"(\d+) upgraded, (\d+) newly installed, (\d+) to remove")
+_KEPT_BACK = re.compile(r"^The following packages have been kept back:\n((?:^  .*\n)+)", re.M)
 
 
 def _iso(ts: int | None) -> str | None:
@@ -42,7 +43,13 @@ def parse_apt_sim(text: str) -> dict:
         counts = {"upgraded": int(m.group(1)), "new": int(m.group(2)), "removed": int(m.group(3))}
     # security-fix packages first, then new ones, then the rest, alphabetical within
     pkgs.sort(key=lambda p: (not p["security"], not p["new"], p["name"]))
-    return {"packages": pkgs, "counts": counts, "total": len(pkgs)}
+    # What apt WOULD have installed and will not. A held package never reaches
+    # the Inst lines, so this block is the only place the simulation admits it
+    # exists -- and "0 updates" with a kept-back list is a different sentence
+    # from "0 updates".
+    m = _KEPT_BACK.search(text)
+    kept = sorted(m.group(1).split()) if m else []
+    return {"packages": pkgs, "counts": counts, "total": len(pkgs), "kept_back": kept}
 
 
 def _hexver(v: str) -> str:
@@ -217,7 +224,12 @@ def build(node: dict, facts: dict, recipes_dir: Path) -> dict:
             "behind": behind,
         },
         "updates": {"total": total, "security": security, "as_of": _iso(facts.get("updates_available_mtime")),
-                    "counts": apt["counts"], "packages": apt["packages"]},
+                    "counts": apt["counts"], "packages": apt["packages"],
+                    # AL6.3: state a person put on this node by hand. `held` is
+                    # what they pinned; `kept_back` is what apt declined to
+                    # install this time, which is usually the held set plus
+                    # whatever depends on it.
+                    "held": facts.get("apt_holds", []), "kept_back": apt.get("kept_back", [])},
         "firmware_updates": fw_updates,
         "cx7": cx7,
         "reboot": {"required": bool(facts.get("reboot_required")), "packages": facts.get("reboot_required_pkgs", []),

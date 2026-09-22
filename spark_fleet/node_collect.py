@@ -81,6 +81,13 @@ out["reboot_required_pkgs"] = [l for l in read("/run/reboot-required.pkgs").spli
 # what full-upgrade would do; a simulation needs no lock and no root
 out["apt_sim"] = sh("apt-sim", ["apt-get", "-s", "-o", "Debug::NoLocking=1", "full-upgrade"], timeout=120)
 
+# Packages a person pinned by hand. They do not appear in the simulation at
+# all -- apt leaves a held package out of the plan and mentions it under "kept
+# back" if anything asked for it -- so without this the record cannot tell
+# "nothing to install" from "nothing it is allowed to install".
+_holds = sh("apt-holds", ["apt-mark", "showhold"]).split()
+out["apt_holds"] = sorted(_holds)
+
 out["dbus_snapshot"] = sh("dbus", ["busctl", "call", "com.nvidia.dgx.dashboard.admin1",
                                    "/com/nvidia/dgx/dashboard/admin", "com.nvidia.dgx.dashboard.admin1",
                                    "GetOTAAvailabilitySnapshot"], timeout=20).strip()

@@ -120,5 +120,54 @@ class VendorTable(unittest.TestCase):
         self.assertIsNone(other["newest"])
 
 
+class HeldPackages(unittest.TestCase):
+    """AL6.3: a held package is invisible in the plan, so the record has to
+    carry it separately or "nothing to install" reads as "up to date".
+
+    The sample is the real `apt-get -s full-upgrade` from sparketa on
+    2026-09-22, the day six kernel metapackages were held there."""
+
+    SIM = """Reading package lists...
+Building dependency tree...
+The following packages have been kept back:
+  libnvidia-cfg1-580 libnvidia-compute-580 linux-image-nvidia-hwe-24.04
+  linux-nvidia-hwe-24.04
+The following packages will be upgraded:
+  curl
+Inst curl [8.5.0-2ubuntu10.6] (8.5.0-2ubuntu10.7 Ubuntu:24.04/noble-security [arm64])
+Conf curl (8.5.0-2ubuntu10.7 Ubuntu:24.04/noble-security [arm64])
+1 upgraded, 0 newly installed, 0 to remove and 4 not upgraded.
+"""
+
+    def test_kept_back_is_parsed_and_is_not_in_the_plan(self):
+        r = posture.parse_apt_sim(self.SIM)
+        self.assertEqual([p["name"] for p in r["packages"]], ["curl"])
+        self.assertEqual(r["kept_back"], ["libnvidia-cfg1-580", "libnvidia-compute-580",
+                                          "linux-image-nvidia-hwe-24.04", "linux-nvidia-hwe-24.04"])
+        # the point of the whole item: the held kernel is NOT in the plan
+        self.assertNotIn("linux-nvidia-hwe-24.04", [p["name"] for p in r["packages"]])
+
+    def test_no_kept_back_section_is_an_empty_list_not_a_missing_key(self):
+        r = posture.parse_apt_sim("1 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n")
+        self.assertEqual(r["kept_back"], [])
+
+    def test_holds_and_kept_back_reach_the_record_separately(self):
+        facts = facts_for("sparketa")
+        facts["apt_sim"] = self.SIM
+        facts["apt_holds"] = ["linux-nvidia-hwe-24.04"]
+        rec = posture.build({"name": "sparketa", "host": "h"}, facts, RECIPES)
+        u = rec["updates"]
+        # what a person pinned, and what apt declined because of it: not the
+        # same list, and the second is the longer one
+        self.assertEqual(u["held"], ["linux-nvidia-hwe-24.04"])
+        self.assertIn("libnvidia-compute-580", u["kept_back"])
+        self.assertNotIn("libnvidia-compute-580", u["held"])
+
+    def test_a_node_with_no_holds_says_so_with_an_empty_list(self):
+        facts = facts_for("sparky")
+        rec = posture.build({"name": "sparky", "host": "h"}, facts, RECIPES)
+        self.assertEqual(rec["updates"]["held"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
