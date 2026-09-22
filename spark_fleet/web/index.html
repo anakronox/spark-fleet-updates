@@ -374,7 +374,7 @@ function confirmUpdate(name, rehearse=false){
     n.release?.available ? `<p>This installs NVIDIA's <b>${esc(n.release.latest_name)}</b> release${others.length ? ' on both' : ''}: ${u} package updates${fw ? ` and firmware for ${fw} device${fw>1?'s':''}` : ''}, then restarts.</p>`
                          : `<p>This installs ${u} package updates${fw ? ` and firmware for ${fw} device${fw>1?'s':''}` : ''}, then restarts.</p>`,
     others.length ? `<p class="muted">${esc(name)} and ${esc(others.join(', '))} are linked, so ${all.length===2?'both are':'all of them are'} updated one after the other.</p>` : '',
-    n.dashboard_auto_update ? `<p class="muted">NVIDIA's own auto-updates will be turned off on ${esc(all.join(' and '))} first, so two installers never run at once.</p>` : '',
+    n.dashboard_auto_update ? `<p class="muted">The DGX Dashboard's own updater is paused on ${esc(all.join(' and '))} while this installs, so two installers never run at once, and resumed the moment the install ends.</p>` : '',
     `<p class="muted">Takes ${fw ? 'about 35' : 'about 15'} minutes per Spark. If anything fails it stops and tells you.</p>`
   ].join('');
   const ask = needsPassword(n) || all.some(m => needsPassword(state.fleet.nodes.find(x=>x.name===m) || {}));

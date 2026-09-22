@@ -15,9 +15,10 @@ to something measured in [`fleet-updates.md`](fleet-updates.md) or recorded in
 │  inventory ─┐                            │       │  ~spark-collect/.ssh         │
 │  recipes ───┼─▶ collector ─▶ scorer ─┐   │       │  ~spark-apply/.ssh           │
 │             │                        ▼   │       │  /etc/sudoers.d/spark-fleet  │
-│             │                   posture  │       │  (dashboard auto-update off) │
+│             │                   posture  │       │                              │
 │             │                        │   │       │                              │
 │             └─▶ planner ◀────────────┘   │       │  during an apply only:       │
+│                    │                     │       │   Dashboard updater paused   │
 │                    │                     │       │   systemd-run transient unit │
 │                    ▼                     │       │   spark-apply-<run>.service  │
 │   executor: precheck→apply→reboot→post   │──────▶│   (gone after reboot)        │
@@ -187,7 +188,9 @@ guards NVIDIA leaves implicit made explicit:
 ```
 PRECHECK   collect + score (baseline)
            spark_updatectl.py reboot plan  →  safe_to_proceed, no blocking inhibitors
-           dpkg lock not held; disk headroom; dashboard auto-update disabled
+           dpkg lock not held; disk headroom
+           pause the Dashboard's updater (settings.json update.enabled=false; the
+             file's previous bytes, or its absence, are kept in the run state)
            recipes match carried copy
            gate: all true, else HOLD
 
@@ -198,6 +201,10 @@ APPLY      systemd-run --unit spark-apply-<run> --wait=false …/apply.sh
                       fwupdmgr refresh ; fwupdmgr upgrade -y <non-interactive flags, verified on fwupd 2.0.20>
            controller polls: systemctl status / journalctl -u, 25 min firmware budget (NVIDIA's own)
            gate: unit exited 0, else HOLD with journal attached
+           either way: put the Dashboard's settings.json back as it was. Not a
+             setting but a pause — that flag also stops the Dashboard CHECKING and
+             its Updates page reads "disabled by your administrator"; found
+             2026-09-22 after two weeks of three silent Dashboards.
 
 REBOOT     spark_updatectl.py reboot now --reason "spark-fleet <run-id>"   (honours inhibitors)
            controller waits for ssh; requires boot_id changed; timeout → HOLD
@@ -268,8 +275,9 @@ tunnel, refused on its plain-HTTP LAN.
 
 | property | mechanism | source |
 |---|---|---|
-| a node is never updated outside a ring | Dashboard auto-update disabled; `apply` is human-triggered | §4.3, NOTES Traps |
-| never fights for the dpkg lock | wait on `lock-frontend`; Dashboard timer off | `self_update.py`, NOTES Traps |
+| a node is never updated outside a ring | the Dashboard never installs on its own (its button is a person); `apply` is human-triggered | §4.3, NOTES Traps |
+| never fights for the dpkg lock | wait on `lock-frontend`; Dashboard updater paused for the install, resumed after | `self_update.py`, NOTES Traps |
+| never leaves the Spark's own Dashboard mute | the pause restores the file's previous bytes on every exit path of the run | `executor._resume_dashboard` |
 | never undoes NVIDIA's pins | plain `apt-get full-upgrade`, never named packages/repos | `fleet-updates.md` §3.1 |
 | never leaves a release half-arrived | `full-upgrade`, not `upgrade` | §3.2 (metapackage `Depends:` growth), NOTES |
 | never reboots into a blocked state | `reboot plan` gate, `reboot now` honours inhibitors | shipped `spark_updatectl.py` 1.1.0 |
@@ -288,8 +296,7 @@ tunnel, refused on its plain-HTTP LAN.
    Spark, its status, "show updates". Add/remove/rename a Spark.
 3. **Planner behind "show updates".** `apt-get -s full-upgrade` and
    `fwupdmgr get-updates` parsed off-box, so the reveal shows real deltas.
-4. **Node prep.** The two users, the sudoers drop-in, Dashboard auto-update
-   off — on `sparky` only.
+4. **Node prep.** The two users, the sudoers drop-in — on `sparky` only.
 5. **The Update button, against `sparky`.** March 2026 → July 2026, the
    whole state machine, progress and log inline, run records on disk. Then
    re-validate the scorer against a fresh oracle, since

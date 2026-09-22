@@ -219,6 +219,42 @@ class Run:
         self._save()
 
     def _update_one(self, node: dict) -> bool:
+        try:
+            return self._update_one_inner(node)
+        finally:
+            # the check or the install may have held, or a stop may have been
+            # asked, after the Dashboard was paused: it is never left that way
+            self._resume_dashboard(node)
+
+    def _resume_dashboard(self, node: dict) -> None:
+        """Put the DGX Dashboard's settings.json back as it was before this run
+        paused its updater — the same bytes, or no file — so the Spark's own
+        update checks and its Updates page come back. A no-op unless this run
+        paused it; safe to call twice."""
+        name, host, user = node["name"], node["host"], node.get("user")
+        n = self._node(name)
+        before = n.get("dashboard_settings_before")
+        if not before:
+            return
+        f = "/opt/nvidia/dgx-dashboard/settings.json"
+        if before.get("unknown"):
+            cmd = "bash -c " + shlex.quote(
+                f"python3 - {f} <<'PY'\nimport json,sys\np=sys.argv[1]\nd=json.load(open(p))\n"
+                "d.setdefault('update',{})['enabled']=True\njson.dump(d,open(p,'w'),indent=2)\nPY")
+        elif before.get("absent"):
+            cmd = f"rm -f {f}"
+        else:
+            cmd = "bash -c " + shlex.quote(f"printf %s {shlex.quote(before.get('text') or '')} > {f}")
+        r = self._run_root(host, user, cmd, timeout=30)
+        if r.ok:
+            self._log(name, "resumed the DGX Dashboard's updater")
+            n["dashboard_settings_before"] = None
+        else:
+            self._log(name, "could not resume the DGX Dashboard's updater: " + (r.err or r.out).strip()[:200]
+                      + f" — until it is, its Updates page says disabled; `sudo rm {f}` on the Spark undoes it")
+        self._save()
+
+    def _update_one_inner(self, node: dict) -> bool:
         name, host, user = node["name"], node["host"], node.get("user")
         n = self._node(name)
         n["status"] = "running"
@@ -252,18 +288,30 @@ class Run:
             self._hold(name, "check", why); return False
         self._log(name, "root access: " + ("your password, for this run only" if self._password else "passwordless sudo on this Spark"))
         if posture.get("dashboard_auto_update") and self.rehearse:
-            self._log(name, "rehearsal: would turn off NVIDIA's own auto-updates here (not touched)")
+            self._log(name, "rehearsal: would pause the DGX Dashboard's updater here (not touched)")
         elif posture.get("dashboard_auto_update"):
-            self._log(name, "turning off NVIDIA's own auto-updates so two installers never run at once")
+            # The flag does more than stop the Dashboard installing: with it set
+            # the Dashboard stops CHECKING, and its Updates page reads "disabled
+            # by your administrator". So it is a pause, not a setting: the file's
+            # previous contents (or its absence) are kept in the run's state and
+            # put back the moment the install unit ends, whatever happened.
+            self._log(name, "pausing the DGX Dashboard's updater so two installers never run at once")
             r = self._run_root(host, user, "bash -c " + shlex.quote(
                 "mkdir -p /opt/nvidia/dgx-dashboard && f=/opt/nvidia/dgx-dashboard/settings.json; "
                 "python3 - \"$f\" <<'PY'\nimport json,sys,os\np=sys.argv[1]\nd={}\n"
-                "try:\n d=json.load(open(p))\nexcept Exception:\n d={}\n"
+                "before=open(p).read() if os.path.exists(p) else None\n"
+                "try:\n d=json.loads(before) if before else {}\nexcept Exception:\n d={}\n"
                 "if not isinstance(d,dict): d={}\nd.setdefault('update',{})['enabled']=False\n"
-                "json.dump(d,open(p,'w'),indent=2)\nprint('ok')\nPY"), timeout=30)
-            self._record(name, "check", "disable-dashboard-auto-update", r, t0, r.out.strip()[:80])
+                "json.dump(d,open(p,'w'),indent=2)\nprint('ok')\n"
+                "print(json.dumps({'absent': before is None, 'text': before}))\nPY"), timeout=30)
+            self._record(name, "check", "pause-dashboard-updater", r, t0, r.out.strip()[:80])
             if not r.ok:
-                self._hold(name, "check", "could not turn off the Dashboard's auto-updates: " + r.err.strip()[:200]); return False
+                self._hold(name, "check", "could not pause the DGX Dashboard's updater: " + r.err.strip()[:200]); return False
+            try:
+                n["dashboard_settings_before"] = json.loads(r.out.strip().splitlines()[-1])
+            except (ValueError, IndexError):
+                n["dashboard_settings_before"] = {"unknown": True}   # resume flips the flag back in place
+            self._save()
         D = self.durations
         est_total = D["apt_fixed"] + D["apt_per_pkg"] * (posture["updates"]["total"] or 0) + D["fw"] + D["reboot"] + D["verify"]
         self._eta(name, est_total)
@@ -346,6 +394,7 @@ class Run:
             self._hold(name, "install", "the install did not finish within its time budget; it may still be running on the Spark"); return False
         rc = int(result.get("ExecMainStatus", "1") or 1)
         self._run_root(host, user, f"bash -c 'systemctl stop {unit} >/dev/null 2>&1; systemctl reset-failed {unit} >/dev/null 2>&1; rm -f /tmp/spark-fleet-apply.sh'", timeout=20)
+        self._resume_dashboard(node)
         env = ssh.Result(rc, "", "")
         self._record(name, "install", "apply.sh", env, t0, f"phase {phase}, rc {rc}")
         if rc != 0 or result.get("Result") not in ("success", None):

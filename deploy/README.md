@@ -219,10 +219,13 @@ check, every update's record. `./ssh` is the key. Copy both.
 - Remove a Spark from the list: its **⋯ → Remove**.
 - Take the controller off a Spark entirely: delete the `spark-fleet-updates`
   line from `~/.ssh/authorized_keys` and `sudo rm /etc/sudoers.d/spark-fleet`.
-- Give the Spark's own Dashboard its automatic updates back:
-  `sudo rm /opt/nvidia/dgx-dashboard/settings.json` (the controller wrote
-  `{"update": {"enabled": false}}` there the first time you pressed Update;
-  it is the only persistent change it makes to a Spark).
+- The Spark's own DGX Dashboard says updates are "disabled by your
+  administrator": `sudo rm /opt/nvidia/dgx-dashboard/settings.json`. The
+  controller pauses the Dashboard's updater (that file, `{"update":
+  {"enabled": false}}`) only while an install runs and puts the file back as
+  it was when the install ends; this is the way out if a run's log says it
+  could not. Versions before 2026-09-22 left it off for good — a Spark
+  updated by one of those needs this once.
 - Stop everything: `docker compose down`. Add `-v` for nothing; state is in
   `./data`, delete that directory if you want it gone.
 
