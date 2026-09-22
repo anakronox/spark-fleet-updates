@@ -275,7 +275,7 @@ tunnel, refused on its plain-HTTP LAN.
 
 | property | mechanism | source |
 |---|---|---|
-| a node is never updated outside a ring | the Dashboard never installs on its own (its button is a person); `apply` is human-triggered | §4.3, NOTES Traps |
+| a node is never updated outside a ring | the Dashboard installs a RELEASE only when a person presses its button; its hourly refresh auto-upgrades the OTA metapackage and nothing else; `apply` is human-triggered | §4.3, NOTES Traps |
 | never fights for the dpkg lock | wait on `lock-frontend`; Dashboard updater paused for the install, resumed after | `self_update.py`, NOTES Traps |
 | never leaves the Spark's own Dashboard mute | the pause restores the file's previous bytes on every exit path of the run | `executor._resume_dashboard` |
 | never undoes NVIDIA's pins | plain `apt-get full-upgrade`, never named packages/repos | `fleet-updates.md` §3.1 |
