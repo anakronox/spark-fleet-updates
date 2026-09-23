@@ -1,5 +1,30 @@
 # spark-fleet-updates
 
+> ## Archived — this now lives inside spark-dash
+>
+> **2026-09-23.** This project was folded into the dashboard it was written
+> alongside. It runs inside that backend now, as a feature called **DGX OS
+> updates**, rather than as a container of its own: same checker, same
+> release recipes, same `apt` + `fwupd` + restart sequence, same guards.
+>
+> - **Use it there:** [anakronox/spark-dash](https://github.com/anakronox/spark-dash)
+>   — setup is [docs/fleet-updates-setup.md](https://github.com/anakronox/spark-dash/blob/main/docs/fleet-updates-setup.md),
+>   a key and one line in `.env`.
+> - **Already running this?** Drop `COMPOSE_PROFILES=fleet` and
+>   `FLEET_UPDATES_URL` from your `.env`, add the overlay, and copy
+>   `fleet/data/fleet.json` into the new state directory — your list of Sparks
+>   is migrated in place and nothing needs re-adding.
+> - **Why:** two containers meant two node lists, two web servers, two images
+>   and two sets of docs describing one thing. The reasoning is written up in
+>   [roadmap AL](https://github.com/anakronox/spark-dash/blob/main/docs/roadmap.md).
+>
+> The research this was built on — how NVIDIA actually updates a GB10, read
+> off live hardware — moved too, and is worth reading on its own:
+> [docs/fleet-updates.md](https://github.com/anakronox/spark-dash/blob/main/docs/fleet-updates.md).
+>
+> Nothing below is maintained. It is left standing because it is what the
+> code in the dashboard grew from.
+
 One page for every NVIDIA DGX Spark you own: is there an update, what's in it,
 and a button to install it.
 
